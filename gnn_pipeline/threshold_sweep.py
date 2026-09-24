@@ -122,7 +122,7 @@ def _decode_all_shots(
     bp_conv = np.concatenate(bp_conv_all, axis=0)
 
     bp_logical = _check_logical_errors_batch(
-        bp_z_errors, bp_x_errors, lx, lz, observables.astype(np.float32),
+        bp_z_errors, bp_x_errors, all_x_syn, all_z_syn, hx, hz, lx, lz, observables.astype(np.float32),
     )
     bp_errors = int(bp_logical.sum())
     bp_converged = int(bp_conv.sum())
@@ -215,7 +215,7 @@ def _decode_all_shots(
         gnn_conv = np.concatenate(gnn_conv_all, axis=0)
 
         gnn_logical = _check_logical_errors_batch(
-            gnn_z_errors, gnn_x_errors, lx, lz, observables.astype(np.float32),
+            gnn_z_errors, gnn_x_errors, all_x_syn, all_z_syn, hx, hz, lx, lz, observables.astype(np.float32),
         )
         gnn_errors = int(gnn_logical.sum())
         gnn_converged = int(gnn_conv.sum())
@@ -244,7 +244,7 @@ def _decode_all_shots(
                 all_x_syn[idx], all_z_syn[idx], hx, hz,
                 error_rate_z=pz, error_rate_x=px,
             )
-            return _check_logical_error(z_e, x_e, lx, lz, observables[idx])
+            return _check_logical_error(z_e, x_e, all_x_syn[idx], all_z_syn[idx], hx, hz, lx, lz, observables[idx])
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=n_workers) as pool:
             results_bposd = list(pool.map(_bposd_shot, range(shots)))
@@ -272,7 +272,7 @@ def _decode_all_shots(
                 all_x_syn[idx], all_z_syn[idx], m_z, m_x, n,
                 edge_map_z=emap_z, edge_map_x=emap_x,
             )
-            return _check_logical_error(z_e, x_e, lx, lz, observables[idx])
+            return _check_logical_error(z_e, x_e, all_x_syn[idx], all_z_syn[idx], hx, hz, lx, lz, observables[idx])
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=n_workers) as pool:
             results_mwpm = list(pool.map(_mwpm_shot, range(shots)))
@@ -300,7 +300,7 @@ def _decode_all_shots(
                 error_rate_z=pz, error_rate_x=px,
                 lsd_order=lsd_order, lsd_method=lsd_method,
             )
-            return _check_logical_error(z_e, x_e, lx, lz, observables[idx])
+            return _check_logical_error(z_e, x_e, all_x_syn[idx], all_z_syn[idx], hx, hz, lx, lz, observables[idx])
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=n_workers) as pool:
             results_bplsd = list(pool.map(_bplsd_shot, range(shots)))
@@ -327,7 +327,7 @@ def _decode_all_shots(
                 all_x_syn[idx], all_z_syn[idx], hx, hz,
                 error_rate_z=pz, error_rate_x=px,
             )
-            return _check_logical_error(z_e, x_e, lx, lz, observables[idx])
+            return _check_logical_error(z_e, x_e, all_x_syn[idx], all_z_syn[idx], hx, hz, lx, lz, observables[idx])
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=n_workers) as pool:
             results_bf = list(pool.map(_bf_shot, range(shots)))

@@ -18,6 +18,7 @@ sys.path.insert(0, '/home/user/adaptive_gnn')
 from gnn_pipeline.tanner_graph import build_tanner_graph
 from gnn_pipeline.gnn_model import TannerGNN
 from gnn_pipeline.bp_decoder import MinSumBPDecoder
+from gnn_pipeline.decoding_failure import css_failures_from_errors
 from gnn_pipeline.loss_functions import focal_loss
 
 torch.manual_seed(42); np.random.seed(42)
@@ -78,9 +79,10 @@ dec_x = MinSumBPDecoder(hz, max_iter=10, alpha=0.8)
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
 def logical_errors(hz_dec, hx_dec, z_gt, x_gt):
-    z_net = (hz_dec.float() + z_gt) % 2
-    x_net = (hx_dec.float() + x_gt) % 2
-    return ((z_net @ lx_t.t() + x_net @ lz_t.t()) % 2).sum(1).gt(0).numpy().astype(bool)
+    return css_failures_from_errors(
+        hz_dec.numpy(), hx_dec.numpy(), z_gt.numpy(), x_gt.numpy(),
+        hx, hz, lx_t.numpy(), lz_t.numpy(),
+    ).failure
 
 def mcnemar(a, b):
     n01 = int(((~a)&b).sum()); n10 = int((a&(~b)).sum()); d=n01+n10

@@ -36,6 +36,7 @@ from torch_geometric.data import Data, Batch
 
 from gnn_pipeline.bp_decoder import MinSumBPDecoder
 from gnn_pipeline.dataset import _load_npz, _parse_meta
+from gnn_pipeline.decoding_failure import component_failures, css_failures
 from gnn_pipeline.gnn_model import TannerGNN, apply_correction
 from gnn_pipeline.tanner_graph import build_tanner_graph
 
@@ -504,21 +505,18 @@ def run_gnn_css_bp_decoder(
 def _check_logical_error(
     z_errors: np.ndarray,
     x_errors: np.ndarray,
+    x_syndrome: np.ndarray,
+    z_syndrome: np.ndarray,
+    hx: np.ndarray,
+    hz: np.ndarray,
     lx: np.ndarray,
     lz: np.ndarray,
     observable: np.ndarray,
 ) -> bool:
-    """Check if decoded correction results in a logical error.
-
-    Z-errors can flip X-type logical operators (lx).
-    X-errors can flip Z-type logical operators (lz).
-    """
-    obs_from_z = (lx @ z_errors) % 2
-    obs_from_x = (lz @ x_errors) % 2
-    predicted_obs = np.concatenate([obs_from_z, obs_from_x])
-
-    n_obs = min(len(predicted_obs), len(observable))
-    return bool(np.any(predicted_obs[:n_obs] != observable[:n_obs]))
+    """Single-shot decoding failure; see :mod:`gnn_pipeline.decoding_failure`."""
+    return bool(css_failures(
+        z_errors, x_errors, x_syndrome, z_syndrome, hx, hz, lx, lz, observable,
+    ).failure[0])
 
 
 # ---------------------------------------------------------------------------
@@ -528,27 +526,18 @@ def _check_logical_error(
 def _check_logical_errors_batch(
     z_errors: np.ndarray,
     x_errors: np.ndarray,
+    x_syndrome: np.ndarray,
+    z_syndrome: np.ndarray,
+    hx: np.ndarray,
+    hz: np.ndarray,
     lx: np.ndarray,
     lz: np.ndarray,
     observables: np.ndarray,
 ) -> np.ndarray:
-    """Vectorized logical error check for a batch of shots.
-
-    Args:
-        z_errors: (B, n) decoded Z-error estimates
-        x_errors: (B, n) decoded X-error estimates
-        lx: (k_x, n) X-type logical operators
-        lz: (k_z, n) Z-type logical operators
-        observables: (B, num_obs) actual observable flips
-
-    Returns:
-        (B,) bool array — True if logical error occurred
-    """
-    obs_from_z = (z_errors @ lx.T) % 2  # (B, k_x)
-    obs_from_x = (x_errors @ lz.T) % 2  # (B, k_z)
-    predicted = np.concatenate([obs_from_z, obs_from_x], axis=1)  # (B, k_x + k_z)
-    n_obs = min(predicted.shape[1], observables.shape[1])
-    return np.any(predicted[:, :n_obs] != observables[:, :n_obs], axis=1)
+    """(B,) decoding failures; see :mod:`gnn_pipeline.decoding_failure`."""
+    return css_failures(
+        z_errors, x_errors, x_syndrome, z_syndrome, hx, hz, lx, lz, observables,
+    ).failure
 
 
 def evaluate_code_capacity(
@@ -688,7 +677,7 @@ def evaluate_code_capacity(
     bp_x_errors = np.concatenate(bp_hard_x_all, axis=0)  # (shots, n)
     bp_conv = np.concatenate(bp_conv_all, axis=0)         # (shots,)
 
-    bp_logical = _check_logical_errors_batch(bp_z_errors, bp_x_errors, lx, lz, observables)
+    bp_logical = _check_logical_errors_batch(bp_z_errors, bp_x_errors, all_x_syn, all_z_syn, hx, hz, lx, lz, observables)
     bp_errors = int(bp_logical.sum())
     bp_converged = int(bp_conv.sum())
 
@@ -737,7 +726,7 @@ def evaluate_code_capacity(
         oracle_x_errors = np.concatenate(oracle_hard_x_all, axis=0)
         oracle_conv = np.concatenate(oracle_conv_all, axis=0)
 
-        oracle_logical = _check_logical_errors_batch(oracle_z_errors, oracle_x_errors, lx, lz, observables)
+        oracle_logical = _check_logical_errors_batch(oracle_z_errors, oracle_x_errors, all_x_syn, all_z_syn, hx, hz, lx, lz, observables)
         oracle_bp_errors = int(oracle_logical.sum())
         oracle_bp_converged = int(oracle_conv.sum())
         oracle_secs = round(time.time() - t_oracle, 2)
@@ -851,7 +840,7 @@ def evaluate_code_capacity(
         gnn_x_errors = np.concatenate(gnn_hard_x_all, axis=0)
         gnn_conv = np.concatenate(gnn_conv_all, axis=0)
 
-        gnn_logical = _check_logical_errors_batch(gnn_z_errors, gnn_x_errors, lx, lz, observables)
+        gnn_logical = _check_logical_errors_batch(gnn_z_errors, gnn_x_errors, all_x_syn, all_z_syn, hx, hz, lx, lz, observables)
         gnn_bp_errors = int(gnn_logical.sum())
         gnn_bp_converged = int(gnn_conv.sum())
         gnn_secs = round(time.time() - t_gnn, 2)
@@ -967,7 +956,7 @@ def evaluate_code_capacity(
         inter_x_errors = np.concatenate(inter_hard_x_all, axis=0)
         inter_conv = np.concatenate(inter_conv_all, axis=0)
 
-        inter_logical = _check_logical_errors_batch(inter_z_errors, inter_x_errors, lx, lz, observables)
+        inter_logical = _check_logical_errors_batch(inter_z_errors, inter_x_errors, all_x_syn, all_z_syn, hx, hz, lx, lz, observables)
         interleaved_bp_errors = int(inter_logical.sum())
         interleaved_bp_converged = int(inter_conv.sum())
         inter_secs = round(time.time() - t_inter, 2)
@@ -1000,7 +989,7 @@ def evaluate_code_capacity(
                 all_x_syn[idx], all_z_syn[idx], hx, hz,
                 error_rate_z=pz, error_rate_x=px,
             )
-            return _check_logical_error(z_e, x_e, lx, lz, observables[idx])
+            return _check_logical_error(z_e, x_e, all_x_syn[idx], all_z_syn[idx], hx, hz, lx, lz, observables[idx])
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=n_workers) as pool:
             results_bposd = list(pool.map(_bposd_shot, range(shots)))
@@ -1033,7 +1022,7 @@ def evaluate_code_capacity(
                 all_x_syn[idx], all_z_syn[idx], matcher_z, matcher_x, n,
                 edge_map_z=emap_z, edge_map_x=emap_x,
             )
-            return _check_logical_error(z_e, x_e, lx, lz, observables[idx])
+            return _check_logical_error(z_e, x_e, all_x_syn[idx], all_z_syn[idx], hx, hz, lx, lz, observables[idx])
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=n_workers) as pool:
             results_mwpm = list(pool.map(_mwpm_shot, range(shots)))
@@ -1066,7 +1055,7 @@ def evaluate_code_capacity(
                 error_rate_z=pz, error_rate_x=px,
                 lsd_order=lsd_order, lsd_method=lsd_method,
             )
-            return _check_logical_error(z_e, x_e, lx, lz, observables[idx])
+            return _check_logical_error(z_e, x_e, all_x_syn[idx], all_z_syn[idx], hx, hz, lx, lz, observables[idx])
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=n_workers) as pool:
             results_bplsd = list(pool.map(_bplsd_shot, range(shots)))
@@ -1098,7 +1087,7 @@ def evaluate_code_capacity(
                 all_x_syn[idx], all_z_syn[idx], hx, hz,
                 error_rate_z=pz, error_rate_x=px,
             )
-            return _check_logical_error(z_e, x_e, lx, lz, observables[idx])
+            return _check_logical_error(z_e, x_e, all_x_syn[idx], all_z_syn[idx], hx, hz, lx, lz, observables[idx])
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=n_workers) as pool:
             results_bf = list(pool.map(_bf_shot, range(shots)))
@@ -1174,7 +1163,7 @@ def evaluate_code_capacity(
                 per_qubit_llr_x=all_corr_llr_x[idx],
                 lsd_order=lsd_order, lsd_method=lsd_method,
             )
-            return _check_logical_error(z_e, x_e, lx, lz, observables[idx])
+            return _check_logical_error(z_e, x_e, all_x_syn[idx], all_z_syn[idx], hx, hz, lx, lz, observables[idx])
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=n_workers) as pool:
             results_gnn_bplsd = list(pool.map(_gnn_bplsd_shot, range(shots)))
@@ -1245,7 +1234,7 @@ def evaluate_code_capacity(
                 per_qubit_llr_x=all_corr_llr_x_osd[idx],
                 osd_order=osd_order,
             )
-            return _check_logical_error(z_e, x_e, lx, lz, observables[idx])
+            return _check_logical_error(z_e, x_e, all_x_syn[idx], all_z_syn[idx], hx, hz, lx, lz, observables[idx])
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=n_workers) as pool:
             results_gnn_bposd = list(pool.map(_gnn_bposd_shot, range(shots)))
@@ -1279,7 +1268,7 @@ def evaluate_code_capacity(
                 per_qubit_llr_x=inter_corr_llr_x[idx],
                 osd_order=osd_order,
             )
-            return _check_logical_error(z_e, x_e, lx, lz, observables[idx])
+            return _check_logical_error(z_e, x_e, all_x_syn[idx], all_z_syn[idx], hx, hz, lx, lz, observables[idx])
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=n_workers) as pool:
             results_inter_bposd = list(pool.map(_inter_bposd_shot, range(shots)))
@@ -1313,7 +1302,7 @@ def evaluate_code_capacity(
                 per_qubit_llr_x=inter_corr_llr_x[idx],
                 lsd_order=lsd_order, lsd_method=lsd_method,
             )
-            return _check_logical_error(z_e, x_e, lx, lz, observables[idx])
+            return _check_logical_error(z_e, x_e, all_x_syn[idx], all_z_syn[idx], hx, hz, lx, lz, observables[idx])
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=n_workers) as pool:
             results_inter_bplsd = list(pool.map(_inter_bplsd_shot, range(shots)))
@@ -1821,11 +1810,9 @@ def evaluate_circuit_level(
         hard_np = hard.cpu().numpy()  # (B, num_errors)
         conv_np = converged.cpu().numpy()
 
-        # Map to observables
-        pred_obs = (hard_np @ obs_matrix) % 2  # (B, num_obs)
-        obs_actual = observables[start:end].astype(np.int64)
-        n_obs_check = min(pred_obs.shape[1], obs_actual.shape[1])
-        logical_err = np.any(pred_obs[:, :n_obs_check] != obs_actual[:, :n_obs_check], axis=1)
+        logical_err = component_failures(
+            hard_np, syndromes[start:end], dem_pcm, obs_matrix.T, observables[start:end],
+        ).failure
 
         bp_logical_all.append(logical_err)
         bp_errors += int(logical_err.sum())
@@ -1894,10 +1881,9 @@ def evaluate_circuit_level(
             hard_np = hard.cpu().numpy()
             conv_np = converged.cpu().numpy()
 
-            pred_obs = (hard_np @ obs_matrix) % 2
-            obs_actual = observables[start:end].astype(np.int64)
-            n_obs_check = min(pred_obs.shape[1], obs_actual.shape[1])
-            logical_err = np.any(pred_obs[:, :n_obs_check] != obs_actual[:, :n_obs_check], axis=1)
+            logical_err = component_failures(
+                hard_np, syndromes[start:end], dem_pcm, obs_matrix.T, observables[start:end],
+            ).failure
 
             gnn_logical_all.append(logical_err)
             gnn_bp_errors += int(logical_err.sum())
@@ -1925,8 +1911,9 @@ def evaluate_circuit_level(
                 det_row, dem_pcm, error_probs, obs_matrix
             )
             observable = observables[idx].astype(np.int64)
-            n_obs_check = min(len(pred_obs_bposd), len(observable))
-            logical_err = bool(np.any(pred_obs_bposd[:n_obs_check] != observable[:n_obs_check]))
+            if pred_obs_bposd.shape != observable.shape:
+                raise ValueError(f"BP-OSD predicted {pred_obs_bposd.shape} observables, data has {observable.shape}")
+            logical_err = (not conv_bposd) or bool(np.any(pred_obs_bposd != observable))
             return logical_err, conv_bposd
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=n_workers) as pool:

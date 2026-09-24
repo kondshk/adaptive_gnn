@@ -41,6 +41,7 @@ import torch
 from codes import create_bivariate_bicycle_codes
 from codes.code_registry import get_code_params
 from gnn_pipeline.bp_decoder import MinSumBPDecoder
+from gnn_pipeline.decoding_failure import css_failures
 from gnn_pipeline.drift_models import generate_drift_sequence
 from gnn_pipeline.tanner_graph import build_tanner_graph
 
@@ -324,10 +325,7 @@ def generate_code_capacity_data(
 
         syndrome = np.concatenate([x_syn, z_syn])  # (mx+mz,)
 
-        # Observables: lx @ x_err XOR lz @ z_err
-        obs_x = (lx @ x_err) % 2
-        obs_z = (lz @ z_err) % 2
-        obs = (obs_x + obs_z) % 2  # (k,)
+        obs = np.concatenate([(lx @ z_err) % 2, (lz @ x_err) % 2])  # (kx + kz,)
 
         syndromes_list.append(syndrome)
         observables_list.append(obs)
@@ -448,13 +446,9 @@ def run_bp_decoder(
 
     # Check logical errors
     observables = data["observables"]
-    logical_errors = 0
-    for i in range(shots):
-        pred_obs_z = (lz @ z_err_pred[i]) % 2
-        pred_obs_x = (lx @ x_err_pred[i]) % 2
-        pred_obs = (pred_obs_z + pred_obs_x) % 2
-        if not np.array_equal(pred_obs, observables[i]):
-            logical_errors += 1
+    logical_errors = int(css_failures(
+        z_err_pred, x_err_pred, x_syn, z_syn, hx, hz, lx, lz, observables,
+    ).failure.sum())
 
     elapsed = time.time() - t0
     ler = logical_errors / shots
@@ -510,16 +504,14 @@ def run_bposd_decoder(
     observables = data["observables"]
 
     t0 = time.time()
-    logical_errors = 0
-    for i in range(shots):
-        z_pred, x_pred = run_css_bposd_decoder(
-            x_syn[i], z_syn[i], hx, hz, pz, px, max_iter=100, osd_order=0,
-        )
-        pred_obs_z = (lz @ z_pred) % 2
-        pred_obs_x = (lx @ x_pred) % 2
-        pred_obs = (pred_obs_z + pred_obs_x) % 2
-        if not np.array_equal(pred_obs, observables[i]):
-            logical_errors += 1
+    preds = [
+        run_css_bposd_decoder(x_syn[i], z_syn[i], hx, hz, pz, px, max_iter=100, osd_order=0)
+        for i in range(shots)
+    ]
+    logical_errors = int(css_failures(
+        np.stack([z for z, _ in preds]), np.stack([x for _, x in preds]),
+        x_syn, z_syn, hx, hz, lx, lz, observables,
+    ).failure.sum())
 
     elapsed = time.time() - t0
     ler = logical_errors / shots
@@ -600,13 +592,9 @@ def run_oracle_bp(
     x_err_pred = np.concatenate(all_x_hard, axis=0)
     conv = np.concatenate(all_conv, axis=0)
 
-    logical_errors = 0
-    for i in range(shots):
-        pred_obs_z = (lz @ z_err_pred[i]) % 2
-        pred_obs_x = (lx @ x_err_pred[i]) % 2
-        pred_obs = (pred_obs_z + pred_obs_x) % 2
-        if not np.array_equal(pred_obs, observables[i]):
-            logical_errors += 1
+    logical_errors = int(css_failures(
+        z_err_pred, x_err_pred, x_syn, z_syn, hx, hz, lx, lz, observables,
+    ).failure.sum())
 
     elapsed = time.time() - t0
     ler = logical_errors / shots
