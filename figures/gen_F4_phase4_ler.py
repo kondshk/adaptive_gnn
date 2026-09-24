@@ -8,20 +8,27 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
+import json
 from pathlib import Path
 
-ps          = np.array([0.020, 0.030, 0.040, 0.050])
-bp_osd_ler  = np.array([0.0046, 0.0377, 0.0831, 0.1515])
-gnn_osd_ler = np.array([0.0050, 0.0399, 0.0876, 0.1555])
+# --- Data: results/tables_v2/gnn_vs_bposd.json (audit_tables_v2.py gnn_vs_bposd) ---
+# GNN+OSD is the mean over the training seeds; a point is marked "worse" when
+# every seed is significantly worse than BP-OSD (McNemar p < 0.05).
+_res = json.loads((Path(__file__).resolve().parent.parent / "results" / "tables_v2"
+                   / "gnn_vs_bposd.json").read_text())
+_pts = sorted(_res["points"].items(), key=lambda kv: float(kv[0]))
+ps          = np.array([float(k) for k, _ in _pts])
+bp_osd_ler  = np.array([v["bposd"]["ler"] for _, v in _pts])
+gnn_osd_ler = np.array([np.mean([g["ler"] for g in v["gnn"].values()]) for _, v in _pts])
 
-n, z = 8000, 1.96
+n, z = _res["shots"], 1.96
 def wilson_ci(p_hat):
     return z * np.sqrt(p_hat * (1 - p_hat) / n)
 
 bp_ci  = wilson_ci(bp_osd_ler)
 gnn_ci = wilson_ci(gnn_osd_ler)
 
-mcn_p      = np.array([0.68, 0.63, 0.033, 3.6e-5])
+mcn_p      = np.array([max(g["mcnemar_bposd_vs_gnn"]["p"] for g in v["gnn"].values()) for _, v in _pts])
 worse_mask = mcn_p < 0.05
 
 plt.rcParams.update({
@@ -74,7 +81,7 @@ ax.set_ylim(2e-3, 4e-1)
 ax.set_xlim(0.014, 0.057)
 ax.set_xlabel(r"Physical error rate $p$")
 ax.set_ylabel("Logical Error Rate")
-ax.set_title(r"$[\![72,12,6]\!]$, $\eta=20$, serial BP-OSD, 8k shots", pad=4)
+ax.set_title(rf"$[\![72,12,6]\!]$, $\eta=20$, serial BP-OSD, {n // 1000}k shots, {len(_res['checkpoints'])} seeds", pad=4)
 
 # Legend upper LEFT
 ax.legend(loc="upper left", handlelength=1.5, handletextpad=0.4)
@@ -85,7 +92,7 @@ ax.legend(loc="upper left", handlelength=1.5, handletextpad=0.4)
 # Lower-right has p~0.048, log-y ~0.009 (well below both × marks).
 ax.annotate(
     r"$\times$ = GNN $\mathit{worse}$" "\n" r"(McNemar $p<0.05$)",
-    xy=(0.040, 0.0876),
+    xy=(ps[worse_mask][-1], gnn_osd_ler[worse_mask][-1]),
     xytext=(0.047, 0.0055),
     fontsize=7,
     color="#B03030",

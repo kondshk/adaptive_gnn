@@ -8,16 +8,18 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
+import json
 from pathlib import Path
 
+# --- Data: results/tables_v2/oracle_mean.json (audit_tables_v2.py oracle --anchor mean) ---
+_cells = json.loads((Path(__file__).resolve().parent.parent / "results" / "tables_v2"
+                     / "oracle_mean.json").read_text())["cells"]
+_points = [("72_12_6", 0.04), ("144_12_12", 0.06), ("288_12_18", 0.07)]
 distances   = np.array([6, 12, 18])
 code_labels = [r"$[\![72,12,6]\!]$", r"$[\![144,12,12]\!]$", r"$[\![288,12,18]\!]$"]
 
-gap_data = {
-    0.25: np.array([11, 16, 18]),
-    0.5:  np.array([30, 38, 48]),
-    1.0:  np.array([66, 74, 87]),
-}
+gap_data = {s: np.array([100 * _cells[f"{c}_p{p}_s{s}"]["gap_vs_mean"] for c, p in _points])
+            for s in (0.25, 0.5, 1.0)}
 colors  = {0.25: "#56B4E9", 0.5: "#0072B2", 1.0: "#D55E00"}
 markers = {0.25: "s",       0.5: "o",        1.0: "^"}
 sigma_labels = {0.25: r"$\sigma=0.25$", 0.5: r"$\sigma=0.5$", 1.0: r"$\sigma=1.0$"}
@@ -65,7 +67,7 @@ for sigma in [0.25, 0.5, 1.0]:
 
 # Endpoint labels placed OUTSIDE the axes on the right
 # Values at d=18: sigma=0.25→18%, 0.5→48%, 1.0→87% — well separated
-label_y = {0.25: 18, 0.5: 48, 1.0: 87}
+label_y = {s: round(float(v[-1])) for s, v in gap_data.items()}
 for sigma in [0.25, 0.5, 1.0]:
     ax.annotate(f"{label_y[sigma]}%",
                 xy=(18, label_y[sigma]),

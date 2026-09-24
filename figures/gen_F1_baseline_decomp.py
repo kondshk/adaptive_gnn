@@ -7,15 +7,19 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
+import json
 from pathlib import Path
 
-# --- Data ---
+# --- Data: results/tables_v2/decomposition.json (audit_tables_v2.py decomposition) ---
+_res = json.loads((Path(__file__).resolve().parent.parent / "results" / "tables_v2"
+                   / "decomposition.json").read_text())
+_keys = ["bp_flooding_ms100", "bp_serial_ms100", "bposd_serial_ms100"]
 labels = ["Flooding BP", "+ Serial\nschedule", "+ OSD-CS-10"]
-lers   = [9.98e-3, 1.49e-3, 2.49e-4]
-ci_lo  = [9.98e-3 - 9.40e-3, 1.49e-3 - 1.20e-3, 2.49e-4 - 1.00e-4]
-ci_hi  = [1.06e-2 - 9.98e-3, 1.80e-3 - 1.49e-3, 6.00e-4 - 2.49e-4]
+lers   = [_res["results"][k]["ler"] for k in _keys]
+ci_lo  = [l - _res["results"][k]["ci"][0] for l, k in zip(lers, _keys)]
+ci_hi  = [_res["results"][k]["ci"][1] - l for l, k in zip(lers, _keys)]
 colors = ["#6BAED6", "#3182BD", "#2C5F7A"]
-ratios = [None, lers[0] / lers[1], lers[1] / lers[2]]   # 6.7x, 6.0x
+ratios = [None, lers[0] / lers[1], lers[1] / lers[2]]
 
 # Style: 8-9 pt fonts, column-width figure (3.3 in)
 plt.rcParams.update({
@@ -49,12 +53,12 @@ ax.errorbar(x, lers, yerr=[ci_lo, ci_hi], fmt="none",
             ecolor="black", capsize=3, capthick=0.7, linewidth=0.7)
 
 ax.set_yscale("log")
-ax.set_ylim(1.5e-4, 2e-2)
+ax.set_ylim(5e-5, 2e-2)
 ax.set_xticks(x)
 ax.set_xticklabels(labels, fontsize=8)
 ax.set_ylabel("Logical Error Rate")
 ax.set_title(
-    r"$[\![288, 12, 18]\!]$, $p=0.04$, $\eta=20$, 100k shots",
+    rf"$[\![288, 12, 18]\!]$, $p={_res['p']}$, $\eta=20$, {_res['shots'] // 1000}k shots",
     pad=4,
 )
 
@@ -64,7 +68,7 @@ for i, ratio in enumerate(ratios):
         continue
     bx = bars[i].get_x() + bars[i].get_width() / 2
     by = bars[i].get_height()
-    ax.text(bx, by / 2.5, f"{ratio:.1f}×",
+    ax.text(bx, (by * 5e-5) ** 0.5, f"{ratio:.1f}×",
             ha="center", va="center",
             fontsize=8, fontweight="bold", color="white")
 
