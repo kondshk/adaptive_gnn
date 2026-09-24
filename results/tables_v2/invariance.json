@@ -1,0 +1,61 @@
+{
+  "288_12_18_p0.015_vs_p0.0286": {
+    "shots": 2000,
+    "identical_shots": {
+      "torch_minsum_flooding10": 1982,
+      "ldpc_ms_serial100": 2000,
+      "ldpc_ms_flooding100": 2000,
+      "ldpc_ps_serial100": 1975
+    }
+  },
+  "72_12_6_p0.04_vs_p0.02": {
+    "shots": 2000,
+    "identical_shots": {
+      "torch_minsum_flooding10": 2000,
+      "ldpc_ms_serial100": 2000,
+      "ldpc_ms_flooding100": 2000,
+      "ldpc_ps_serial100": 1957
+    }
+  },
+  "eta_sweep_72_p0.03_true_eta20": {
+    "shots": 5000,
+    "decoder": "ldpc_ms_serial100",
+    "by_assumed_eta": {
+      "1": {
+        "failures": 174,
+        "z_sha1": "936e7dac57fe",
+        "x_sha1": "7856fdde9fbc"
+      },
+      "2": {
+        "failures": 174,
+        "z_sha1": "936e7dac57fe",
+        "x_sha1": "7856fdde9fbc"
+      },
+      "5": {
+        "failures": 174,
+        "z_sha1": "936e7dac57fe",
+        "x_sha1": "7856fdde9fbc"
+      },
+      "10": {
+        "failures": 174,
+        "z_sha1": "936e7dac57fe",
+        "x_sha1": "7856fdde9fbc"
+      },
+      "20": {
+        "failures": 174,
+        "z_sha1": "936e7dac57fe",
+        "x_sha1": "7856fdde9fbc"
+      },
+      "50": {
+        "failures": 174,
+        "z_sha1": "936e7dac57fe",
+        "x_sha1": "7856fdde9fbc"
+      },
+      "100": {
+        "failures": 174,
+        "z_sha1": "936e7dac57fe",
+        "x_sha1": "7856fdde9fbc"
+      }
+    }
+  }
+}
