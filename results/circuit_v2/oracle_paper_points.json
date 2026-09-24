@@ -1,0 +1,218 @@
+{
+  "p0.001": {
+    "p_mean": 0.001,
+    "sigma": 1.0,
+    "profiles": 20,
+    "shots_per_profile": 500,
+    "shots": 10000,
+    "per_profile_failures": {
+      "mean": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "median": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "oracle": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "profiles_mean_worse": 0,
+    "profiles_oracle_worse": 0,
+    "mean_failures": 0,
+    "mean_ler": 0.0,
+    "mean_ci": [
+      0.0,
+      0.00038401247776654115
+    ],
+    "median_failures": 0,
+    "median_ler": 0.0,
+    "median_ci": [
+      0.0,
+      0.00038401247776654115
+    ],
+    "oracle_failures": 0,
+    "oracle_ler": 0.0,
+    "oracle_ci": [
+      0.0,
+      0.00038401247776654115
+    ],
+    "mcnemar_mean_vs_oracle": {
+      "n10": 0,
+      "n01": 0,
+      "chi2": 0.0,
+      "p": 1.0
+    },
+    "mcnemar_median_vs_oracle": {
+      "n10": 0,
+      "n01": 0,
+      "chi2": 0.0,
+      "p": 1.0
+    },
+    "gap_mean_vs_oracle": NaN
+  },
+  "p0.003": {
+    "p_mean": 0.003,
+    "sigma": 1.0,
+    "profiles": 20,
+    "shots_per_profile": 500,
+    "shots": 10000,
+    "per_profile_failures": {
+      "mean": [
+        0,
+        1,
+        0,
+        0,
+        2,
+        2,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        2,
+        1,
+        2,
+        1,
+        1,
+        0,
+        0
+      ],
+      "median": [
+        0,
+        1,
+        0,
+        0,
+        2,
+        2,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        2,
+        2,
+        2,
+        1,
+        1,
+        0,
+        0
+      ],
+      "oracle": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0
+      ]
+    },
+    "profiles_mean_worse": 6,
+    "profiles_oracle_worse": 0,
+    "mean_failures": 14,
+    "mean_ler": 0.0014,
+    "mean_ci": [
+      0.0008341542630379929,
+      0.0023487829797908017
+    ],
+    "median_failures": 15,
+    "median_ler": 0.0015,
+    "median_ci": [
+      0.0009092536302792232,
+      0.0024736068100540184
+    ],
+    "oracle_failures": 6,
+    "oracle_ler": 0.0006,
+    "oracle_ci": [
+      0.0002750097221404114,
+      0.0013085419406528096
+    ],
+    "mcnemar_mean_vs_oracle": {
+      "n10": 9,
+      "n01": 1,
+      "chi2": 4.9,
+      "p": 0.026856695507524425
+    },
+    "mcnemar_median_vs_oracle": {
+      "n10": 9,
+      "n01": 0,
+      "chi2": 7.111111111111111,
+      "p": 0.007660761135179472
+    },
+    "gap_mean_vs_oracle": 0.5714285714285714
+  }
+}
