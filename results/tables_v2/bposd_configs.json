@@ -1,0 +1,118 @@
+{
+  "code": "288_12_18",
+  "p": 0.04,
+  "eta": 20.0,
+  "shots": 100000,
+  "data_seed": 7000,
+  "chunks": 4,
+  "configs": {
+    "bp_parallel_ps30": {
+      "bp_method": "ps",
+      "schedule": "parallel",
+      "max_iter": 30,
+      "osd": null
+    },
+    "bp_serial_ms100": {
+      "bp_method": "ms",
+      "ms_scaling_factor": 0.8,
+      "schedule": "serial",
+      "max_iter": 100,
+      "osd": null
+    },
+    "bposd_parallel_ps30": {
+      "bp_method": "ps",
+      "schedule": "parallel",
+      "max_iter": 30,
+      "osd": {
+        "osd_method": "osd_cs",
+        "osd_order": 10
+      }
+    },
+    "bposd_serial_ms100": {
+      "bp_method": "ms",
+      "ms_scaling_factor": 0.8,
+      "schedule": "serial",
+      "max_iter": 100,
+      "osd": {
+        "osd_method": "osd_cs",
+        "osd_order": 10
+      }
+    }
+  },
+  "results": {
+    "bp_parallel_ps30": {
+      "failures": 5689,
+      "shots": 100000,
+      "ler": 0.05689,
+      "ci": [
+        0.05547127658534042,
+        0.05834276713435605
+      ]
+    },
+    "bp_serial_ms100": {
+      "failures": 174,
+      "shots": 100000,
+      "ler": 0.00174,
+      "ci": [
+        0.0015001204908894519,
+        0.002018160350833732
+      ]
+    },
+    "bposd_parallel_ps30": {
+      "failures": 3983,
+      "shots": 100000,
+      "ler": 0.03983,
+      "ci": [
+        0.038635480414939104,
+        0.04105987400832537
+      ]
+    },
+    "bposd_serial_ms100": {
+      "failures": 34,
+      "shots": 100000,
+      "ler": 0.00034,
+      "ci": [
+        0.00024332826620375529,
+        0.0004750601361873785
+      ]
+    }
+  },
+  "mcnemar": {
+    "bp_parallel_ps30_vs_bp_serial_ms100": {
+      "n10": 5526,
+      "n01": 11,
+      "chi2": 5491.095539100596,
+      "p": 0.0
+    },
+    "bp_parallel_ps30_vs_bposd_parallel_ps30": {
+      "n10": 1706,
+      "n01": 0,
+      "chi2": 1704.0005861664713,
+      "p": 0.0
+    },
+    "bp_parallel_ps30_vs_bposd_serial_ms100": {
+      "n10": 5655,
+      "n01": 0,
+      "chi2": 5653.000176834659,
+      "p": 0.0
+    },
+    "bp_serial_ms100_vs_bposd_parallel_ps30": {
+      "n10": 132,
+      "n01": 3941,
+      "chi2": 3560.2415909648907,
+      "p": 0.0
+    },
+    "bp_serial_ms100_vs_bposd_serial_ms100": {
+      "n10": 140,
+      "n01": 0,
+      "chi2": 138.00714285714287,
+      "p": 7.261513428684345e-32
+    },
+    "bposd_parallel_ps30_vs_bposd_serial_ms100": {
+      "n10": 3962,
+      "n01": 13,
+      "chi2": 3921.183396226415,
+      "p": 0.0
+    }
+  }
+}
