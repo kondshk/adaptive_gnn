@@ -220,20 +220,24 @@ def run_gnn_vs_bposd(ps, shots, workers):
 
 # ------------------------------------------------------ Table 6 / Fig. F2
 def _oracle_chunk(args):
-    code_name, p, sigma, shots, seed = args
+    code_name, p, sigma, shots, seed, anchor = args
     n = code(code_name)[0].shape[1]
     rng = np.random.default_rng(seed + 7_777_777)
-    pq = np.minimum(p * np.exp(sigma * rng.standard_normal((shots, n))), 0.5)  # median p, fresh per shot
+    median = p if anchor == "median" else p * math.exp(-sigma ** 2 / 2)
+    pq = np.minimum(median * np.exp(sigma * rng.standard_normal((shots, n))), 0.5)  # fresh per shot
     z, x = sample(code_name, p, shots, seed, qubit_rates=pq)
-    mean_p = p * math.exp(sigma ** 2 / 2)
+    mean_p = median * math.exp(sigma ** 2 / 2)
     return dict(mean=decode_all(code_name, z, x, SERIAL_MS, True, p=mean_p).failure,
-                median=decode_all(code_name, z, x, SERIAL_MS, True, p=p).failure,
+                median=decode_all(code_name, z, x, SERIAL_MS, True, p=median).failure,
                 oracle=decode_all(code_name, z, x, SERIAL_MS, True, priors=pq, p=p).failure)
 
 
-def run_oracle(points, sigmas, shots, workers):
-    summ = dict(eta=ETA, shots=shots, decoder=dict(SERIAL_MS, osd=OSD_CS10),
-                noise="p_q = p_median * exp(sigma * N(0,1)), fresh per shot, capped at 0.5",
+def run_oracle(points, sigmas, shots, workers, anchor="median"):
+    """anchor='median': p is the median per-qubit rate (mean grows with sigma);
+    anchor='mean': p is the mean rate, held fixed across sigma."""
+    summ = dict(eta=ETA, shots=shots, decoder=dict(SERIAL_MS, osd=OSD_CS10), anchor=anchor,
+                noise="p_q = p_median * exp(sigma * N(0,1)), fresh per shot, capped at 0.5; "
+                      "p_median = p (anchor median) or p * exp(-sigma^2/2) (anchor mean)",
                 mean_prior="uniform p_median * exp(sigma^2/2)", cells={})
     arrays = {}
     per = -(-shots // workers)
@@ -241,9 +245,9 @@ def run_oracle(points, sigmas, shots, workers):
         for si, s in enumerate(sigmas):
             t0 = time.time()
             seeds = [5_000_000 + 100_000 * ci + 1000 * si + j for j in range(workers)]
-            parts = chunked(_oracle_chunk, [(code_name, p, s, per, sd) for sd in seeds], workers)
+            parts = chunked(_oracle_chunk, [(code_name, p, s, per, sd, anchor) for sd in seeds], workers)
             f = {k: np.concatenate([r[k] for r in parts])[:shots] for k in ("mean", "median", "oracle")}
-            rec = dict(code=code_name, p_median=p, sigma=s, data_seeds=seeds,
+            rec = dict(code=code_name, p=p, anchor=anchor, sigma=s, data_seeds=seeds,
                        **{k: entry(v) for k, v in f.items()},
                        mcnemar_mean_vs_oracle=mcnemar(f["mean"], f["oracle"]),
                        mcnemar_median_vs_oracle=mcnemar(f["median"], f["oracle"]))
@@ -255,7 +259,7 @@ def run_oracle(points, sigmas, shots, workers):
             arrays.update({f"{key}_{k}": v for k, v in f.items()})
             print(f"{key}: mean {rec['mean']['failures']} median {rec['median']['failures']} "
                   f"oracle {rec['oracle']['failures']} gap {rec['gap_vs_mean']:.3f} ({time.time() - t0:.0f}s)", flush=True)
-    save("oracle", summ, arrays)
+    save("oracle" if anchor == "median" else f"oracle_{anchor}", summ, arrays)
 
 
 # ------------------------------------------------------ invariance checks
@@ -307,6 +311,8 @@ if __name__ == "__main__":
     ap.add_argument("what", choices=["bposd_configs", "decomposition", "gnn_vs_bposd", "oracle", "invariance"])
     ap.add_argument("--shots", type=int, default=None)
     ap.add_argument("--workers", type=int, default=4)
+    ap.add_argument("--anchor", choices=["median", "mean"], default="median",
+                    help="oracle: whether p is the median or the mean per-qubit rate")
     a = ap.parse_args()
     if a.what == "bposd_configs":
         run_configs("bposd_configs", ["bp_parallel_ps30", "bp_serial_ms100", "bposd_parallel_ps30",
@@ -319,6 +325,6 @@ if __name__ == "__main__":
     elif a.what == "oracle":
         run_oracle([("72_12_6", 0.04), ("144_12_12", 0.06), ("288_12_18", 0.07),
                     ("144_12_12", 0.04), ("288_12_18", 0.04)],
-                   [0.25, 0.5, 1.0], a.shots or 50_000, a.workers)
+                   [0.25, 0.5, 1.0], a.shots or 50_000, a.workers, a.anchor)
     else:
         run_invariance()
