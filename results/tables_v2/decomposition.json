@@ -1,0 +1,83 @@
+{
+  "code": "288_12_18",
+  "p": 0.04,
+  "eta": 20.0,
+  "shots": 100000,
+  "data_seed": 7100,
+  "chunks": 4,
+  "configs": {
+    "bp_flooding_ms100": {
+      "bp_method": "ms",
+      "ms_scaling_factor": 0.8,
+      "schedule": "parallel",
+      "max_iter": 100,
+      "osd": null
+    },
+    "bp_serial_ms100": {
+      "bp_method": "ms",
+      "ms_scaling_factor": 0.8,
+      "schedule": "serial",
+      "max_iter": 100,
+      "osd": null
+    },
+    "bposd_serial_ms100": {
+      "bp_method": "ms",
+      "ms_scaling_factor": 0.8,
+      "schedule": "serial",
+      "max_iter": 100,
+      "osd": {
+        "osd_method": "osd_cs",
+        "osd_order": 10
+      }
+    }
+  },
+  "results": {
+    "bp_flooding_ms100": {
+      "failures": 1280,
+      "shots": 100000,
+      "ler": 0.0128,
+      "ci": [
+        0.012121749024017756,
+        0.013515682088428628
+      ]
+    },
+    "bp_serial_ms100": {
+      "failures": 145,
+      "shots": 100000,
+      "ler": 0.00145,
+      "ci": [
+        0.001232535678381119,
+        0.0017057674437661405
+      ]
+    },
+    "bposd_serial_ms100": {
+      "failures": 27,
+      "shots": 100000,
+      "ler": 0.00027,
+      "ci": [
+        0.00018557429746693656,
+        0.0003928194829575946
+      ]
+    }
+  },
+  "mcnemar": {
+    "bp_flooding_ms100_vs_bp_serial_ms100": {
+      "n10": 1138,
+      "n01": 3,
+      "chi2": 1127.0429447852762,
+      "p": 4.378440439085748e-247
+    },
+    "bp_flooding_ms100_vs_bposd_serial_ms100": {
+      "n10": 1254,
+      "n01": 1,
+      "chi2": 1249.007171314741,
+      "p": 1.3641100143050013e-273
+    },
+    "bp_serial_ms100_vs_bposd_serial_ms100": {
+      "n10": 118,
+      "n01": 0,
+      "chi2": 116.00847457627118,
+      "p": 4.7326982919297275e-27
+    }
+  }
+}
