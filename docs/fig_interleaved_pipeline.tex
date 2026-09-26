@@ -1,4 +1,4 @@
-\documentclass[border=16pt]{standalone}
+\documentclass[border=4pt]{standalone}
 \usepackage{tikz}
 \usetikzlibrary{arrows.meta, calc}
 \usepackage{amsmath, amssymb}
@@ -33,7 +33,7 @@
 \begin{document}
 \begin{tikzpicture}[
     >=Stealth,
-    font=\sffamily\small,
+    font=\sffamily\Large,
     gnn/.style  = {rectangle, draw=gnnblue, fill=gnnfill, line width=0.9pt,
                    rounded corners=4pt,
                    minimum width=2.6cm, minimum height=1.1cm, align=center},
@@ -45,15 +45,15 @@
                    minimum width=5.2cm, minimum height=1.1cm, align=center},
     io/.style   = {rectangle, draw=iogray!60, fill=iofill, line width=0.7pt,
                    rounded corners=3pt, minimum width=1.2cm, minimum height=0.7cm,
-                   align=center, font=\sffamily\footnotesize},
+                   align=center, font=\sffamily\large},
     hd/.style   = {rectangle, draw=iogray!60, fill=iofill, line width=0.7pt,
                    rounded corners=3pt, minimum width=1.6cm, minimum height=0.7cm,
-                   align=center, font=\sffamily\footnotesize},
+                   align=center, font=\sffamily\large},
     plus/.style = {circle, draw=black!60, fill=white, line width=0.9pt,
                    minimum size=0.6cm, inner sep=0pt},
     arr/.style  = {->, thick, black!55},
     farr/.style = {filmorange!80, dashed, semithick},
-    lbl/.style  = {font=\sffamily\scriptsize, inner sep=1.5pt}
+    lbl/.style  = {font=\sffamily\large, inner sep=1.5pt}
 ]
 
 % ════════════════════════════════════════════════════════════════════════════
@@ -135,14 +135,14 @@
 % γ(1),β(1): above the horizontal segment, near its midpoint
 % segment runs x=0 → x=4.9; midpoint ≈ x=2.3
 % anchor is south so the text sits clearly above the wire
-\node[lbl, filmorange!90, above] at (2.3, 4.6)
+\node[lbl, filmorange!90, above] at (1.5, 4.6)
     {$\gamma^{(1)}\!,\;\beta^{(1)}$};
 
 % Right branch: horizontal to x=9.8 then straight down to gnn2.north (9.8, 3.55)
 \draw[->, farr] (fjunc) -- (9.8, 4.6) -- (gnn2.north);
 
 % γ(2),β(2): above its horizontal segment midpoint ≈ x=7.35
-\node[lbl, filmorange!90, above] at (7.35, 4.6)
+\node[lbl, filmorange!90, above] at (8.3, 4.6)
     {$\gamma^{(2)}\!,\;\beta^{(2)}$};
 
 % ════════════════════════════════════════════════════════════════════════════
