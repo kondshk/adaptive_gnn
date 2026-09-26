@@ -43,7 +43,7 @@ GNN + BP, 10 iter. & $0.0942\pm0.0006$ & $0.2564\pm0.0019$\\
 \quad relative reduction & $12.5\%\pm0.6\%$ & $10.6\%\pm0.7\%$\\
 \quad McNemar $n_{10}/n_{01}$ (range) & 313--370 / 64--95 & 343--394 / 66--80\\
 BP, 100 iter. & 0.0863 & 0.2403\\
-BP-OSD-CS(10), 100 iter. & 0.0742 & 0.2215\\
+Serial BP-OSD-CS(10), 100 iter. & 0.0707 & 0.2138\\
 \hline
 \end{tabular}
 \end{table}
@@ -54,4 +54,4 @@ outside the training range; every seed is significant
 ($p<10^{-36}$, McNemar). The gain comes mostly from convergence: shots where
 BP fails to reproduce the syndrome fall from 1{,}740 to 838--975 of 20{,}000.
 The gain does not close the gap to longer decoding: 100-iteration BP (0.0863)
-and BP-OSD (0.0742) both outperform GNN + 10-iteration BP.
+and serial BP-OSD (0.0707) both outperform GNN + 10-iteration BP.
