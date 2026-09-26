@@ -29,6 +29,7 @@ Status key: **traced** = script and stored output in the repo;
 | Capacity test (14%, 17/3, p=0.004) | `audit_confound4.py`, `audit_c4_results.json` | traced; rerun under the corrected failure definition | `audit_confound4.py` |
 | Fig. F5 (interleaved training) | none; no script or PDF in repo | untraceable | needs the original run |
 | Table 5 / Fig. F4 (GNN+OSD vs BP-OSD) | `figures/gen_F4_*.py` hard-coded numbers | regenerated | `audit_tables_v2.py gnn_vs_bposd` |
+| New: paired failure-set table (Sec. mismatch) | none (was `\pending`) | new | `audit_failure_sets.py`, `results/failure_sets/` |
 | Table 6 / Fig. F2 (oracle gap) | `figures/gen_F2_*.py` hard-coded numbers | regenerated; **noise model mis-described** | `audit_tables_v2.py oracle --anchor mean` |
 | Rate-estimating GNN (0.069 vs 0.064) | none | untraceable | needs the original code |
 | Table 7 / Fig. F3 (per-qubit OU drift) | `figures/gen_F3_*.py` hard-coded numbers | untraceable | needs the original code |
