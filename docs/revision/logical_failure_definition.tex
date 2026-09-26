@@ -1,0 +1,23 @@
+\paragraph{Logical failure.}
+For each shot let $\hat{\mathbf{e}}_z$ and $\hat{\mathbf{e}}_x$ be the
+decoder's hard decisions and let
+$\mathbf{r}_z=\mathbf{e}_z\oplus\hat{\mathbf{e}}_z$ and
+$\mathbf{r}_x=\mathbf{e}_x\oplus\hat{\mathbf{e}}_x$ be the residual
+errors. A shot is counted as a logical failure if either
+(i) the estimate does not reproduce the measured syndrome,
+$\Hmat_x\hat{\mathbf{e}}_z\neq\mathbf{s}_x$ or
+$\Hmat_z\hat{\mathbf{e}}_x\neq\mathbf{s}_z$; or
+(ii) the syndrome is reproduced but the residual acts nontrivially on the
+code space, $\mathbf{L}_x\mathbf{r}_z\neq\mathbf{0}$ or
+$\mathbf{L}_z\mathbf{r}_x\neq\mathbf{0}$ over $\F_2$, where the rows of
+$\mathbf{L}_x$ ($\mathbf{L}_z$) span the $k=12$ independent $X$-type
+($Z$-type) logical operators modulo stabilizers. Condition (i) is required
+because a syndrome-inconsistent residual is not a logical operator, so its
+parity against a fixed set of logical representatives is not meaningful;
+non-converged BP outputs are therefore always counted as failures. The
+$X$- and $Z$-components are combined by logical OR, so the reported LER is
+the probability that at least one of the 12 encoded qubits suffers a
+logical error of any Pauli type in a single shot. At circuit level the same
+rule is applied to the detector error model: a shot fails if the decoded
+fault set does not reproduce the observed detection events, or if it does
+and its predicted observable flips differ from the true ones.

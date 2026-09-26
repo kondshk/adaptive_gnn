@@ -1,0 +1,295 @@
+% ============================================================================
+% Step 6: writing items. Paste-ready replacements for STAR_GNN_BB_v2.tex.
+% Numbers come from the step 1-5 re-runs (see docs/PROVENANCE.md in the repo).
+% Companion files: headline_v2.tex, circuit_v2.tex, tables_v2.tex,
+% failure_sets.tex, logical_failure_definition.tex, bib_additions.bib.
+% ============================================================================
+
+% ---------------------------------------------------------------------------
+% TITLE. Nithin's suggestion:
+%   GNN-Augmented BP Architectures for QLDPC Decoding
+% Alternative that states the main findings:
+%   GNN-Augmented Belief Propagation for Bivariate Bicycle Codes:
+%   Baseline Dependence and the Value of Per-Qubit Calibration
+% ---------------------------------------------------------------------------
+\title{GNN-Augmented BP Architectures for QLDPC Decoding}
+
+% ---------------------------------------------------------------------------
+% ABSTRACT (replaces the whole abstract)
+% ---------------------------------------------------------------------------
+\begin{abstract}
+Bivariate bicycle (BB) quantum low-density parity-check (QLDPC) codes
+combine finite encoding rate with low-weight checks, but their loopy
+Tanner graphs remain challenging for iterative decoding. We study a
+Tanner-graph neural network (\textsc{TannerGNN}) that produces
+qubit-wise log-likelihood corrections for belief propagation (BP) under
+$Z$-biased noise ($\eta=20$), and ask how its gain depends on the decoder
+it is compared against. On the $\code{72}{12}{6}$ BB code, a model trained
+through 10-iteration flooding BP reduces the logical error rate (LER) of
+that decoder by $12.5\%\pm0.6\%$ at $p=0.04$ and by $10.6\%\pm0.7\%$ at
+$p=0.06$, outside the training range (five training seeds, 20{,}000 and
+10{,}000 held-out shots, every seed McNemar $p<10^{-36}$). The gain comes
+mainly from helping BP converge, and it does not reach longer decoding:
+100-iteration BP and serial BP-OSD both outperform GNN-augmented
+10-iteration BP, and the same corrections make BP-OSD slightly worse. A
+paired failure-set analysis shows why: the failure sets of BP and BP-OSD
+are nested, and most shots the GNN repairs are shots BP-OSD already
+decodes. Baseline experiments show that BP schedule and OSD
+post-processing change LER by about $47\times$ on
+$\code{288}{12}{18}$, so these settings must be specified whenever
+learned decoders are compared. We prove that the hard decisions of
+unclipped min-sum BP are invariant to a uniform rescaling of the channel
+LLRs, so a global noise estimate alone cannot make min-sum BP adaptive.
+In contrast, revealing true per-qubit error rates reduces BP-OSD's LER by
+$65$--$88\%$ under heterogeneous code-capacity noise ($\sigma=1$) and by
+$56\%$ under circuit-level noise, identifying spatially resolved
+calibration as the more informative side information.
+\end{abstract}
+
+% ---------------------------------------------------------------------------
+% CONTRIBUTIONS (replaces the enumerate in Sec. contributions)
+% ---------------------------------------------------------------------------
+\begin{enumerate}[leftmargin=*,topsep=3pt,itemsep=3pt]
+\item \textbf{A reproducible GNN gain over the training decoder, and its
+limits.} On $\code{72}{12}{6}$, \textsc{TannerGNN} + 10-iteration flooding
+BP reduces LER by $12.5\%\pm0.6\%$ at $p=0.04$ and $10.6\%\pm0.7\%$ at
+$p=0.06$ over five training seeds, with train, validation and test data
+drawn from independent seeds and checkpoints selected on validation data
+(Sec.~\ref{sec:gnn_positive}). The corrected decoder remains weaker than
+100-iteration BP and serial BP-OSD.
+
+\item \textbf{The training decoder and the evaluation decoder are part of
+the experimental condition.} The same corrections do not improve serial
+BP-OSD and are significantly worse in 14 of 15 seed--error-rate pairs
+from $p=0.03$ on. The failure sets of BP
+and BP-OSD are nested (93\% of BP-OSD failures are BP failures), and
+64--69\% of the shots the GNN repairs are already decoded correctly by
+BP-OSD. On $\code{288}{12}{18}$, changing only the BP schedule and then
+adding OSD-CS-10 lowers LER by $8.8\times$ and $5.4\times$
+(Secs.~\ref{sec:baseline} and~\ref{sec:mismatch}).
+
+\item \textbf{Global prior scaling and spatial calibration carry
+different information.} Hard decisions of unclipped min-sum BP are
+invariant to a uniform positive rescaling of the channel LLRs within a
+CSS component. In contrast, providing true per-qubit rates to BP-OSD
+reduces LER by up to $88\%$ at code capacity and by $56\%$ at circuit
+level (Secs.~\ref{sec:invariance}, \ref{sec:oraclegap}
+and~\ref{sec:circuit}).
+\end{enumerate}
+
+% ---------------------------------------------------------------------------
+% TABLE 1 (replaces tab:codes). Polynomials verified: each pair gives the
+% stated n and k = n - rank(H_X) - rank(H_Z) = 12, weight-6 checks.
+% ---------------------------------------------------------------------------
+\begin{table}[t]
+\centering
+\small
+\caption{Bivariate bicycle codes studied in this work~\cite{Bravyi2024Memory}.
+         $\Hmat_x=[\mathbf{A}\mid\mathbf{B}]$ and
+         $\Hmat_z=[\mathbf{B}^\top\mid\mathbf{A}^\top]$ over
+         $\F_2[x,y]/(x^\ell-1,\,y^m-1)$.}
+\label{tab:codes}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{@{}lccccl@{}}
+\toprule
+Code & Name & $\ell$ & $m$ & $A(x,y)$ & $B(x,y)$ \\
+\midrule
+$\code{72}{12}{6}$   & ---        &  6 &  6 & $x^3+y+y^2$   & $y^3+x+x^2$ \\
+$\code{144}{12}{12}$ & gross      & 12 &  6 & $x^3+y+y^2$   & $y^3+x+x^2$ \\
+$\code{288}{12}{18}$ & two-gross  & 12 & 12 & $x^3+y^2+y^7$ & $y^3+x+x^2$ \\
+\bottomrule
+\end{tabular}}
+\end{table}
+% (Rates: 1/6, 1/12, 1/24. Add a column back if wanted.)
+
+% ---------------------------------------------------------------------------
+% NOISE MODELS (replaces the body of Sec. noise, including the Y pending)
+% ---------------------------------------------------------------------------
+\subsection{Noise models}\label{sec:noise}
+
+\paragraph{Code capacity.} Each data qubit independently suffers a $Z$
+flip with probability $p_z$ and an $X$ flip with probability $p_x$,
+\begin{equation}
+p_z = \frac{p\eta}{\eta+1}, \qquad p_x = \frac{p}{\eta+1},
+\qquad \eta = 20 .
+\label{eq:bias}
+\end{equation}
+No separate $Y$ channel is sampled: a qubit carries a $Y$ error only if it
+receives both flips, which happens with probability
+$p_xp_z\approx p^2/22$. This is therefore a $Z$-biased independent
+$X$/$Z$ model, not depolarizing noise. Syndromes are
+$\mathbf{s}_x=\Hmat_x\mathbf{e}_z$ and $\mathbf{s}_z=\Hmat_z\mathbf{e}_x$,
+and the two CSS components are decoded separately with priors $p_z$ and
+$p_x$.
+
+\paragraph{Spatial heterogeneity.} For the oracle experiments each data
+qubit has its own rate $p_i=p\,e^{\sigma z_i-\sigma^2/2}$,
+$z_i\sim\mathcal N(0,1)$, redrawn every shot and capped at $0.5$, so the
+mean rate is $p$ for every contrast $\sigma$; Eq.~\eqref{eq:bias} is then
+applied per qubit.
+
+\paragraph{Temporal drift.} The training data for the GNN use a
+sinusoidal modulation of the base rate, $p(t)=p_0+A\sin(2\pi t/T)$ with
+$A=0.015$ and $T=500$ shots. The pipeline also implements an
+Ornstein--Uhlenbeck model, $p_{t+1}=p_t+\theta(p_0-p_t)+s\,\xi_t$ with
+$\theta=0.1$, $s=0.005$, $\xi_t\sim\mathcal N(0,1)$, and random telegraph
+noise switching between $p_0\pm0.01$ with probability $0.005$ per shot;
+all rates are clipped to $[10^{-6},0.5]$. These models are motivated by
+fluctuating two-level-system defects~\cite{Klimov2018,Carroll2022}. The
+decoder receives no direct access to instantaneous noise parameters.
+
+\paragraph{Circuit level.} See Sec.~\ref{sec:circuit} for the syndrome
+extraction circuit, detectors and circuit noise.
+
+% ---------------------------------------------------------------------------
+% TRAINING (replaces the paragraph after Table 2 with its \pending, and
+% Table 2 itself). The headline model differs from the train_supervised.py
+% defaults previously listed; Table 2 now describes the model behind
+% Tables 4-5.
+% ---------------------------------------------------------------------------
+\begin{table}[t]
+\centering
+\caption{Configuration of the \textsc{TannerGNN} model behind
+         Sec.~\ref{sec:gnn_positive} and Sec.~\ref{sec:mismatch}.}
+\label{tab:hparams}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{@{}ll@{}}
+\toprule
+\multicolumn{2}{@{}l}{\textit{Architecture}} \\
+\midrule
+Message-passing layers / hidden width & 3 / 32 \\
+Node features                         & 4 (value, one-hot node type) \\
+Residual connections, layer norm      & yes \\
+FiLM / attention                      & not used \\
+Parameters                            & 39{,}329 \\
+\midrule
+\multicolumn{2}{@{}l}{\textit{Training}} \\
+\midrule
+Data & 8{,}000 shots, sinusoidal drift, $p\in[0.005,0.045]$ \\
+Loss & focal, $\alpha=0.25$, $\gamma=2$, on $\mathbf{e}_z$ \\
+Optimiser & AdamW, lr $2\times10^{-3}$, weight decay $10^{-4}$ \\
+Batch size / epochs & 64 / 20, gradient clipping 1.0 \\
+Checkpoint & lowest failures on 4{,}000 validation shots \\
+Training seeds & 5 \\
+\midrule
+\multicolumn{2}{@{}l}{\textit{Decoders}} \\
+\midrule
+BP (training and Table~\ref{tab:gnn_flooding}) & flooding min-sum, scaling 0.8, 10 iter. \\
+BP-OSD reference & serial min-sum, scaling 0.8, 100 iter., OSD-CS-10 \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+\paragraph{Training loss.} For a shot with prior LLR
+$\ell=\ln\bigl((1-p)/p\bigr)$ on every qubit, the GNN outputs a correction
+$\delta_j$ for each qubit $j$, giving the corrected error probability
+$q_j=\sigma\bigl(-(\ell+\delta_j)\bigr)$. The model is trained on the
+focal loss~\cite{Lin2017Focal} against the true $Z$ error
+$\mathbf{e}_z$,
+\begin{equation}
+\mathcal{L}=-\frac{1}{Bn}\sum_{b=1}^{B}\sum_{j=1}^{n}
+\alpha_{t}\,(1-q_{t})^{\gamma}\log q_{t},
+\quad
+q_t=\begin{cases}q_j & e_{z,j}=1\\ 1-q_j & e_{z,j}=0\end{cases},
+\quad
+\alpha_t=\begin{cases}\alpha & e_{z,j}=1\\ 1-\alpha & e_{z,j}=0\end{cases},
+\label{eq:loss}
+\end{equation}
+with $\alpha=0.25$ and $\gamma=2$. No syndrome-consistency term is used
+for this model. At decoding time the corrected LLRs $\ell+\delta_j$ are
+passed to both CSS components. The earlier FiLM and interleaved models
+additionally used a syndrome-consistency term, the binary cross-entropy
+between the measured syndrome and
+$\tfrac12\bigl(1-\prod_{j\in\mathcal N(c)}(1-2q_j)\bigr)$ for each check
+$c$ (weight $0.1$ in the configuration of the previous version).
+
+% ---------------------------------------------------------------------------
+% DISCUSSION: "The GNN's role and its limits" (replaces both paragraphs)
+% ---------------------------------------------------------------------------
+\subsection{The GNN's role and its limits}
+
+\textsc{TannerGNN} reduces the LER of the 10-iteration flooding BP
+decoder used in its training loop by $12.5\%\pm0.6\%$ over five training
+seeds, and the gain persists outside the training range. The mechanism is
+mainly convergence: the GNN roughly halves the number of shots on which BP
+fails to reach a syndrome-consistent estimate (1{,}740 to 838--975 of
+20{,}000). Running BP for 100 iterations achieves more than this, and
+BP-OSD more still, so the result is best read as a cheaper route to part
+of the benefit of longer decoding, not as an improvement on
+state-of-the-art BB decoding.
+
+The Regime-B result follows from the failure-set structure
+(Table~\ref{tab:failure_sets}): BP-OSD's failures are a near-subset of
+BP's, and the GNN's repairs fall mostly on shots BP-OSD already decodes.
+When passed to BP-OSD, the learned corrections reshuffle failures among
+the hardest shots and make OSD choose heavier incorrect estimates, giving
+a small net loss. Training against the target decoder, for example
+through a differentiable surrogate of OSD or on the residual failures of
+BP-OSD, is the appropriate next test.
+
+% ---------------------------------------------------------------------------
+% "Towards spatially-resolved conditioning": replace the last two sentences
+% ---------------------------------------------------------------------------
+Such a decoder should be compared with a non-learned per-qubit frequency
+estimator and evaluated at circuit level, where the oracle gap remains
+large ($56\%$ at $p_\mathrm{mean}=0.006$, Sec.~\ref{sec:circuit}).
+Whether such rates can be estimated well enough from syndrome history has
+not been established in the present experiments.
+
+% ---------------------------------------------------------------------------
+% LIMITATIONS (replaces the enumerate)
+% ---------------------------------------------------------------------------
+\begin{enumerate}[leftmargin=*,topsep=3pt,itemsep=2pt,label=(\roman*)]
+\item The GNN was trained only through 10-iteration flooding BP. Training
+      against serial BP-OSD, the competitive classical baseline, is untested.
+\item GNN checkpoints exist only for $\code{72}{12}{6}$; the larger codes
+      were not trained because of CPU-only compute. The Regime-B result
+      should not be extrapolated to them.
+\item The single per-qubit correction $\delta_j$ is trained on $Z$ errors
+      and applied to both CSS components, which is suboptimal under
+      $\eta=20$ biased noise; separate $Z$ and $X$ readout heads are the
+      natural fix.
+\item The interleaved model reached its best validation checkpoint at
+      epoch~1 and is not evaluated.
+\item The circuit-level study uses one code, 6 rounds and a biased
+      single-qubit channel after each gate; two-qubit correlated faults,
+      leakage and crosstalk are not modelled, and the paper's operating
+      points $p_\mathrm{mean}\le0.003$ are too clean to resolve the gap.
+\item Hyperparameter search and training duration were limited by CPU-only
+      compute.
+\end{enumerate}
+
+% ---------------------------------------------------------------------------
+% CONCLUSION (replaces the whole section body)
+% ---------------------------------------------------------------------------
+On $\code{72}{12}{6}$, a Tanner-graph GNN trained through 10-iteration
+flooding BP reduces that decoder's LER by $12.5\%\pm0.6\%$ at $p=0.04$
+and $10.6\%\pm0.7\%$ at $p=0.06$, reproducibly over five training seeds
+and on leakage-free held-out data. The gain comes mostly from helping BP
+converge. It does not reach 100-iteration BP or serial BP-OSD, and the
+same corrections make BP-OSD slightly worse because the shots they repair
+are largely ones BP-OSD already decodes. An improvement over one BP
+baseline therefore does not establish an improvement over a stronger
+decoder.
+
+Decoder configuration matters as much as the learned component: on
+$\code{288}{12}{18}$, schedule and OSD post-processing alone change LER by
+about $47\times$. We proved that uniform positive rescaling of the channel
+LLRs leaves the hard decisions of unclipped min-sum BP unchanged, so a
+global noise estimate cannot by itself make min-sum BP adaptive. Per-qubit
+calibration, in contrast, is highly informative: revealing true per-qubit
+rates reduces BP-OSD's LER by up to $88\%$ at code capacity and by $56\%$
+under circuit-level noise. The direct next test is a learned decoder
+conditioned on persistent spatial calibration data, compared against a
+fully specified serial BP-OSD baseline and a non-learned per-qubit
+estimator.
+
+% ---------------------------------------------------------------------------
+% DATA AND CODE AVAILABILITY (append)
+% ---------------------------------------------------------------------------
+Every table and figure is produced by a committed script from stored
+per-shot outcomes: \texttt{audit\_headline\_v2.py} (headline result),
+\texttt{audit\_tables\_v2.py} (baseline, invariance, BP-OSD and oracle
+tables), \texttt{audit\_failure\_sets.py} (failure sets) and
+\texttt{audit\_circuit\_v2.py} (circuit level); \texttt{docs/PROVENANCE.md}
+maps each reported number to its source.

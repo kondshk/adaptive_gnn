@@ -1,0 +1,80 @@
+% --- Replacement for Sec. "Circuit-level evaluation" (Table 8 + Fig. F6) ------
+\subsection{Circuit-level evaluation}\label{sec:circuit}
+
+\paragraph{Circuit and noise model.}
+We simulate a $Z$-basis memory experiment on $\code{72}{12}{6}$ with
+6 rounds of syndrome extraction. Data qubits are prepared in $\ket{0}$;
+each round measures all 36 $X$-checks and then all 36 $Z$-checks with
+dedicated ancillas, using CNOT layers from a greedy conflict-free schedule;
+the data qubits are finally measured in the $Z$ basis. Detectors are
+(i) the 36 $Z$-checks of round 1, which are deterministic for the prepared
+state, (ii) the XOR of consecutive measurements of every check in rounds
+2--6, and (iii) the XOR of the last $Z$-check outcome with the parity of the
+measured data qubits in its support, giving 432 detectors and 12 logical
+observables (the $Z$-type logical operators). Noise is a biased single-qubit
+Pauli channel with $p_X=p/(\eta+1)$, $p_Z=p\,\eta/(\eta+1)$, $p_Y=0$,
+$\eta=20$, applied to every qubit after each one- and two-qubit gate and to
+every idle qubit at each time step; measurements and resets flip with
+probability $p$. Under spatially non-uniform noise each qubit $q$ (data and
+ancilla) has rate $p_q=p_\mathrm{mean}e^{\sigma z_q}$, $z_q\sim\mathcal N(0,1)$,
+$\sigma=1$, on all of its fault locations.
+
+\paragraph{Decoders.}
+We decode the detector error model (DEM; 4{,}068 fault mechanisms) with
+BP-OSD (min-sum, scaling $0.625$, serial schedule, 100 iterations, OSD-CS
+order 10). The \emph{mean-prior} decoder uses a uniform rate equal to the
+log-normal mean $p_\mathrm{mean}e^{\sigma^2/2}$; the \emph{oracle} uses the
+true $p_q$. We draw 20 (40) rate profiles at $p_\mathrm{mean}\le0.003$
+($0.006$) and 500 shots per profile. A shot fails if the decoded fault set
+does not reproduce the detection events or predicts the wrong observable flips.
+
+\begin{table}[t]
+\centering
+\caption{Circuit-level oracle gap on $\code{72}{12}{6}$ (6 rounds, $\eta=20$,
+log-normal $\sigma=1$). $n_{10}$: shots only the mean-prior decoder fails;
+$n_{01}$: shots only the oracle fails. The last column counts rate profiles
+on which the mean-prior decoder has more failures than the oracle / fewer.}
+\label{tab:circuit}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{@{}lccccc@{}}
+\toprule
+$p_\mathrm{mean}$ & Shots & Mean-prior LER & Oracle LER & $n_{10}/n_{01}$ (McNemar $p$) & Profiles \\
+\midrule
+0.001 & 10{,}000 & $0$ ($<\!3.8\times10^{-4}$) & $0$ ($<\!3.8\times10^{-4}$) & 0/0 & 0/0 \\
+0.003 & 10{,}000 & $1.4\times10^{-3}$ & $0.6\times10^{-3}$ & 9/1 (0.027) & 6/0 \\
+0.006 & 20{,}000 & $1.36\times10^{-2}$ & $0.60\times10^{-2}$ & 192/39 ($1.5\times10^{-23}$) & 38/2 \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{fig_F6_circuit_oracle}
+\caption{Circuit-level oracle gap on $\code{72}{12}{6}$. Points: logical
+error rate with 95\% Wilson intervals; open triangles: 95\% upper bound when
+no failures were observed. The per-qubit oracle has $56\%$ fewer failures
+than the mean-prior decoder at $p_\mathrm{mean}=0.006$.}
+\label{fig:circuit_oracle}
+\end{figure}
+
+Knowing the per-qubit rates also helps at circuit level
+(Table~\ref{tab:circuit}, Fig.~\ref{fig:circuit_oracle}). At
+$p_\mathrm{mean}=0.006$ the oracle reduces the logical error rate from
+$1.36\%$ to $0.60\%$ ($56\%$; McNemar $p=1.5\times10^{-23}$), and it is
+better on 38 of 40 independent rate profiles (sign test $p=1.5\times10^{-9}$),
+so the result is not driven by a few extreme profiles. At
+$p_\mathrm{mean}=0.003$ the gap has the same size ($57\%$) but only 10
+discordant shots, and at $p_\mathrm{mean}=0.001$ neither decoder fails in
+$10^4$ shots. The circuit-level gap ($56\%$) is somewhat smaller than the
+code-capacity gap on the same code ($65.7\%$), but it does not vanish.
+
+\paragraph{Correction to an earlier version.}
+An earlier version of this section reported logical error rates of $0.27$ and
+$0.34$ at $p_\mathrm{mean}=0.001$ and $0.003$ and no oracle gap. Those
+circuits lacked the first-round and final detectors (360 instead of 432),
+so any fault that flipped a logical near the time boundaries was invisible
+to the decoder. This produced a logical error floor that no prior could
+remove. With the complete detector set, uniform noise at $p=0.001$, $0.003$,
+$0.005$ and $0.01$ gives $0/10^4$, $5/10^4$, $14/10^4$ and
+$2.1\times10^{-2}$; the legacy circuit gives $0.124$ and $0.336$ at
+$p=0.001$ and $0.003$.

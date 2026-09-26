@@ -1,0 +1,101 @@
+% ============================================================================
+% Regenerated tables (step 4). Source: audit_tables_v2.py, results/tables_v2/.
+% ============================================================================
+
+% --- Table 3 (replaces tab:smoking_gun) -------------------------------------
+\begin{table*}[t]
+\centering
+\caption{Effect of BP-OSD configuration on $\code{288}{12}{18}$, $p=0.04$,
+         $\eta=20$, $100{,}000$ identical shots, separate-CSS decoding with
+         priors $p_Z=p\eta/(\eta+1)$, $p_X=p/(\eta+1)$. 95\% Wilson intervals
+         in brackets. OSD is OSD-CS of order 10.}
+\label{tab:smoking_gun}
+\begin{tabular}{@{}llllcc@{}}
+\toprule
+Config & Schedule & Method & Iter & LER & Errors \\
+\midrule
+BP              & parallel & prod-sum & 30  & 0.0569 [0.0555, 0.0583] & 5{,}689 \\
+BP              & serial   & ms(0.8)  & 100 & 0.00174 [0.00150, 0.00202] & 174 \\
+BP-OSD          & parallel & prod-sum & 30  & 0.0398 [0.0386, 0.0411] & 3{,}983 \\
+BP-OSD          & serial   & ms(0.8)  & 100 & 0.00034 [0.00024, 0.00048] & 34 \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+% --- Replacement for the paragraph after Table 3 / the \pending on F1 -------
+A separate $100{,}000$-shot experiment (Fig.~\ref{fig:baseline_decomp})
+changes one factor at a time. The flooding comparator is min-sum BP with
+scaling factor $0.8$, at most 100 iterations, stopping at the first
+iteration whose hard decision satisfies the syndrome, with a parallel
+(flooding) schedule; the second decoder is identical except for the serial
+schedule; the third adds OSD-CS-10. The logical error rate falls from
+$1.28\times10^{-2}$ to $1.45\times10^{-3}$ ($8.8\times$, paired
+$n_{10}/n_{01}=1138/3$) and then to $2.7\times10^{-4}$ ($5.4\times$,
+$118/0$), about $47\times$ overall.
+
+% --- Invariance paragraph (replaces "We observed the expected invariance ...")
+We checked the proposition on 2{,}000 shots each. With ldpc min-sum BP
+(serial or flooding, 100 iterations), changing the assumed uniform rate
+from $p=0.015$ to $0.0286$ on $\code{288}{12}{18}$, or from $0.04$ to
+$0.02$ on $\code{72}{12}{6}$, leaves every hard decision unchanged
+(2{,}000/2{,}000), and an assumed-bias sweep
+$\eta\in\{1,2,5,10,20,50,100\}$ at $p=0.03$ gives identical decisions at
+every value. Two cases fall outside the proposition, and the invariance
+fails there: our PyTorch min-sum implementation clamps messages to
+$\pm20$ and changes 18/2{,}000 decisions on $\code{288}{12}{18}$, and
+sum-product BP changes 25--43 of 2{,}000.
+
+% --- Table 5 (replaces tab:gnn_null) ---------------------------------------
+\begin{table}[t]
+\centering
+\caption{GNN+OSD vs.\ serial BP-OSD on $\code{72}{12}{6}$, $\eta=20$,
+         $20{,}000$ identical shots per $p$, five GNN training seeds.
+         Serial min-sum BP-OSD-CS-10 (scaling 0.8, 100 iterations).}
+\label{tab:gnn_null}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{@{}lccc@{}}
+\toprule
+$p$ & Serial BP-OSD & GNN+OSD (5 seeds) & Seeds worse ($p_\mathrm{McN}<0.05$) \\
+\midrule
+0.02 & 0.0093 & 0.0095--0.0102 & 1/5 \\
+0.03 & 0.0297 & 0.0306--0.0317 & 5/5 \\
+0.04 & 0.0676 & 0.0688--0.0709 & 4/5 \\
+0.05 & 0.1354 & 0.1384--0.1418 & 5/5 \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+% --- Oracle-gap noise model (replaces the first sentence of sec:oraclegap) --
+Under spatially non-uniform per-qubit noise, each data qubit has rate
+$p_i=p\,e^{\sigma z_i-\sigma^2/2}$ with $z_i\sim\mathcal N(0,1)$ drawn
+fresh every shot (capped at 0.5), so the mean rate is $p$ for every
+$\sigma$; the mean-prior decoder uses the uniform rate $p$.
+
+% --- Table 6 (replaces tab:oracle) -----------------------------------------
+\begin{table*}[t]
+\centering
+\caption{Oracle gap: percentage LER reduction of per-qubit-oracle over
+         mean-prior serial BP-OSD-CS-10, $50{,}000$ identical shots per
+         cell. Parentheses: mean-prior failures. McNemar
+         $p<10^{-20}$ in the upper three rows and $p<10^{-5}$ in the last.
+         The upper three rows use the operating points of
+         Fig.~\ref{fig:oracle_gap}; the lower rows fix $p=0.04$.}
+\label{tab:oracle}
+\begin{tabular}{@{}llccc@{}}
+\toprule
+Code ($d$) & $p$ & $\sigma=0.25$ & $\sigma=0.5$ & $\sigma=1.0$ \\
+\midrule
+$\code{72}{12}{6}$   (6)  & 0.04 & $10.8\%$ (3508) & $28.7\%$ (3432) & $65.1\%$ (3438) \\
+$\code{144}{12}{12}$ (12) & 0.06 & $12.0\%$ (3165) & $34.8\%$ (3203) & $79.9\%$ (2936) \\
+$\code{288}{12}{18}$ (18) & 0.07 & $12.8\%$ (3338) & $40.9\%$ (3307) & $88.3\%$ (2786) \\
+\midrule
+$\code{144}{12}{12}$ (12) & 0.04 & $19.8\%$ (324)  & $45.5\%$ (275)  & $85.3\%$ (278) \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+% --- Capacity test sentence (replaces "a GNN trained on 1,000 fixed ...") ---
+A fixed-dataset capacity test provides an additional diagnostic: a GNN
+trained on 1{,}000 fixed syndromes for 50 epochs reduced the failure count
+on those same syndromes from 105 to 93 ($11\%$; $n_{10}=15$, $n_{01}=3$,
+McNemar $p=0.0095$).

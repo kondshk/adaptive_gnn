@@ -1,0 +1,72 @@
+% ============================================================================
+% Paired failure-set analysis (step 5). Source: audit_failure_sets.py,
+% results/failure_sets/test_p04.json and test_p06.json.
+% Replaces the \pending{...Jaccard/overlap...} note in Sec. mismatch.
+% ============================================================================
+
+\begin{table}[t]
+\centering
+\caption{Paired failure sets on $\code{72}{12}{6}$, $p=0.04$, $\eta=20$,
+         $20{,}000$ identical held-out shots. BP: 10-iteration flooding
+         min-sum (the GNN's training decoder). GNN rows give the range over
+         five training seeds. ``Non-conv.'': the estimate does not reproduce
+         the syndrome.}
+\label{tab:failure_sets}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{@{}lcc@{}}
+\toprule
+Decoder & Failures & Non-conv. \\
+\midrule
+BP, 10 iter.            & 2{,}155 & 1{,}740 \\
+BP, 100 iter.           & 1{,}727 & 700 \\
+Serial BP-OSD           & 1{,}414 & 0 \\
+GNN + BP, 10 iter.      & 1{,}874--1{,}906 & 838--975 \\
+GNN + BP-OSD            & 1{,}439--1{,}451 & 0 \\
+\midrule
+\multicolumn{3}{@{}l}{\textit{Overlaps}} \\
+BP-OSD failures that BP also fails & \multicolumn{2}{c}{1{,}319 / 1{,}414 (93\%)} \\
+BP-100 failures that BP also fails & \multicolumn{2}{c}{1{,}727 / 1{,}727 (100\%)} \\
+Shots GNN fixes for BP (BP fails, GNN+BP succeeds) & \multicolumn{2}{c}{313--370} \\
+\quad of which BP did not converge & \multicolumn{2}{c}{91--93\%} \\
+\quad of which BP-OSD also fails & \multicolumn{2}{c}{31--36\%} \\
+BP-OSD failures that GNN+BP also fails & \multicolumn{2}{c}{87--88\%} \\
+GNN+BP-OSD vs.\ BP-OSD: newly failed / rescued & \multicolumn{2}{c}{237--282 / 206--254} \\
+\quad newly failed shots that BP also fails & \multicolumn{2}{c}{91--95\%} \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+Table~\ref{tab:failure_sets} compares the failure sets of all decoders on
+identical shots. The failure sets are nested rather than disjoint: every
+shot that 100-iteration BP fails is also failed by 10-iteration BP, and
+93\% of BP-OSD's failures are BP failures. What separates the decoders is
+mainly convergence: 81\% of 10-iteration BP failures are shots on which BP
+does not reach a syndrome-consistent estimate, whereas BP-OSD always
+returns one. No decoder fails on any error of weight $\le 2=(d-1)/2$;
+all failures involve errors of weight at least 3 (mean weight 5.4--5.7).
+In 1{,}411 of BP-OSD's 1{,}414 failures the returned correction is
+syndrome-consistent and no heavier than the true error, so these failures
+are limited by the code and the noise, not by a decoder returning an
+unnecessarily heavy estimate.
+
+The GNN's gains lie where BP-OSD already succeeds. Of the 313--370 shots
+the GNN fixes for 10-iteration BP, 91--93\% are shots on which BP did not
+converge, and only 31--36\% are shots that BP-OSD fails; conversely,
+GNN+BP still fails 87--88\% of BP-OSD's failures. When the same
+corrections are passed to BP-OSD, they reshuffle rather than remove its
+failures (237--282 newly failed vs.\ 206--254 rescued shots), almost
+entirely among the hard shots on which BP itself fails. They also make
+OSD return heavier incorrect estimates (20--43 failures with an estimate
+heavier than the true error, vs.\ 3 for BP-OSD alone). The same pattern
+holds at $p=0.06$ (10{,}000 shots): 96\% of BP-OSD failures are BP
+failures, and 30--36\% of the GNN's fixes are BP-OSD failures.
+
+% --- Replacement for the contributions bullet that begins
+%     "A GNN trained to repair flooding BP's trapping-set failures is
+%      orthogonal to BP-OSD's residual failure modes." --------------------
+A GNN trained through flooding BP mainly repairs BP non-convergence.
+Paired failure-set analysis shows that these repairs fall mostly on shots
+that BP-OSD already decodes correctly (64--69\% of fixes), while the
+failure sets of BP and BP-OSD are nested (93\% of BP-OSD failures are BP
+failures). Passing the same corrections to BP-OSD reshuffles its failures
+on the hardest shots and yields a small net loss.
