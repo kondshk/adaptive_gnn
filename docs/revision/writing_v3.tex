@@ -189,13 +189,10 @@ $\mathbf{e}_z$,
 \begin{equation}
 \mathcal{L}=-\frac{1}{Bn}\sum_{b=1}^{B}\sum_{j=1}^{n}
 \alpha_{t}\,(1-q_{t})^{\gamma}\log q_{t},
-\quad
-q_t=\begin{cases}q_j & e_{z,j}=1\\ 1-q_j & e_{z,j}=0\end{cases},
-\quad
-\alpha_t=\begin{cases}\alpha & e_{z,j}=1\\ 1-\alpha & e_{z,j}=0\end{cases},
 \label{eq:loss}
 \end{equation}
-with $\alpha=0.25$ and $\gamma=2$. No syndrome-consistency term is used
+where $q_t=q_j$ and $\alpha_t=\alpha$ if $e_{z,j}=1$, and
+$q_t=1-q_j$ and $\alpha_t=1-\alpha$ otherwise, with $\alpha=0.25$ and $\gamma=2$. No syndrome-consistency term is used
 for this model. At decoding time the corrected LLRs $\ell+\delta_j$ are
 passed to both CSS components. The earlier FiLM and interleaved models
 additionally used a syndrome-consistency term, the binary cross-entropy
@@ -287,7 +284,8 @@ estimator.
 % ---------------------------------------------------------------------------
 % DATA AND CODE AVAILABILITY (append)
 % ---------------------------------------------------------------------------
-Every table and figure is produced by a committed script from stored
+All tables and figures except the drift experiment and the interleaved
+training curves are produced by a committed script from stored
 per-shot outcomes: \texttt{audit\_headline\_v2.py} (headline result),
 \texttt{audit\_tables\_v2.py} (baseline, invariance, BP-OSD and oracle
 tables), \texttt{audit\_failure\_sets.py} (failure sets) and
