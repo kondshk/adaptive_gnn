@@ -80,7 +80,7 @@ Quantum computing has attracted significant attention due to demonstrations of c
 
 While QEC enables fault tolerance in principle, the overhead of many traditional codes can be prohibitive, motivating interest in quantum low-density parity-check (QLDPC) codes. QLDPC codes leverage sparse parity-check structure to support efficient scaling, and recent developments suggest that QLDPC families can achieve high thresholds with reduced overhead compared to earlier approaches \cite{Bravyi2024Memory,Panteleev2021QLDPC}. However, decoding remains a critical bottleneck. The standard approach for LDPC-style decoding is belief propagation (BP), an iterative message-passing algorithm on the Tanner graph induced by the parity-check matrix \cite{Roffe2020Landscape}. BP is attractive because of its low per-iteration complexity and amenability to hardware-friendly implementations, but its performance depends strongly on assumed error priors and independence structure. These assumptions are often violated by realistic device noise, where error types can be strongly biased (e.g., dephasing-dominated noise) and drift over time due to calibration changes or environmental fluctuations \cite{Tuckett2018Bias}. As a result, BP can perform poorly under prior mismatch even when the syndrome contains sufficient information to recover the correct logical state.
 
-Recent work has shown that learned decoders can improve performance on difficult QLDPC Tanner graphs. Maan and Paler~\cite{Maan2025MLBP} developed Astra, a scalable GNN decoder that replaces BP entirely, achieving higher thresholds than BP-OSD on bivariate bicycle codes up to distance~18. Ninkovi\'{c} et al.~\cite{Ninkovic2024GNN} proposed a GNN decoder exploiting the sparse graph structure of QLDPC codes with linear complexity scaling. Gong et al.~\cite{Gong2024GNN} constructed a fully differentiable iterative decoder that interleaves BP stages with intermediate GNN layers, lowering the error floor on quantum bicycle codes. For surface codes, Caune et al.~\cite{Caune2025FiLM} applied Feature-wise Linear Modulation (FiLM) conditioning to enable noise-adaptive decoding, and Bausch et al.~\cite{Bausch2025ML} demonstrated a recurrent transformer that outperforms BP-OSD by a factor of~5 on the $\code{72}{12}{6}$ code at circuit level. In classical coding, Nachmani et al.~\cite{Nachmani2016Learning,Nachmani2018Deep} showed that learnable per-iteration edge weights can compensate for short cycles in BP. However, these approaches either replace BP entirely, address only surface codes, or operate under simplified noise models. No prior work has combined GNN-based LLR correction, FiLM noise adaptivity, differentiable neural BP, and mid-decoding interleaved correction within a single framework for QLDPC codes.
+Recent work has shown that learned decoders can improve performance on difficult QLDPC Tanner graphs. Maan and Paler~\cite{Maan2025MLBP} developed Astra, a scalable GNN decoder that replaces BP entirely, achieving higher thresholds than BP-OSD on bivariate bicycle codes up to distance~18. Ninkovi\'{c} et al.~\cite{Ninkovic2024GNN} proposed a GNN decoder exploiting the sparse graph structure of QLDPC codes with linear complexity scaling. Gong et al.~\cite{Gong2024GNN} constructed a fully differentiable iterative decoder that interleaves BP stages with intermediate GNN layers, lowering the error floor on quantum bicycle codes. For repetition codes on IBM hardware, Stein et al.~\cite{Stein2026FiLM} applied Feature-wise Linear Modulation (FiLM) conditioning to enable noise-adaptive decoding, and Blue et al.~\cite{Blue2026MLBB} demonstrated a recurrent transformer that outperforms BP-OSD by a factor of~5 on the $\code{72}{12}{6}$ code at circuit level. In classical coding, Nachmani et al.~\cite{Nachmani2016Learning,Nachmani2018Deep} showed that learnable per-iteration edge weights can compensate for short cycles in BP. However, these approaches either replace BP entirely, address only surface codes, or operate under simplified noise models. No prior work has combined GNN-based LLR correction, FiLM noise adaptivity, differentiable neural BP, and mid-decoding interleaved correction within a single framework for QLDPC codes.
 
 \subsection{Contributions}
 
@@ -176,7 +176,7 @@ To evaluate robustness to noise non-stationarity, we modulate the base error rat
 
 \item \textbf{Ornstein--Uhlenbeck (OU):} $\mathrm{d}p = \theta(p_\mathrm{base} - p)\,\mathrm{d}t + \sigma\,\mathrm{d}W$ with $\theta = 0.1$, $\sigma = 0.005$, a mean-reverting stochastic process modeling slow environmental drift.
 
-\item \textbf{Random telegraph noise (RTN):} $p(t) \in \{p_\mathrm{base} \pm \delta\}$ with $\delta = 0.01$, switching probability $q = 0.005$ per shot, modeling discrete two-level system (TLS) fluctuator events~\cite{Klimov2018Fluctuations,Burnett2019Decoherence}.
+\item \textbf{Random telegraph noise (RTN):} $p(t) \in \{p_\mathrm{base} \pm \delta\}$ with $\delta = 0.01$, switching probability $q = 0.005$ per shot, modeling discrete two-level system (TLS) fluctuator events~\cite{Klimov2018,Burnett2019Decoherence}.
 \end{itemize}
 
 Critically, the decoder receives \emph{no direct access} to instantaneous noise parameters; the FiLM module must infer the operating point from the syndrome alone.
@@ -243,7 +243,7 @@ The additive correction preserves channel information while allowing the GNN to 
 
 \subsection{FiLM conditioning for noise adaptivity}\label{sec:film}
 
-Standard BP assumes fixed, known channel parameters. When the physical error rate drifts---as occurs on real hardware due to TLS fluctuators and calibration decay~\cite{Klimov2018Fluctuations,Burnett2019Decoherence}---fixed-parameter decoders face a mismatch between assumed and actual noise. Feature-wise Linear Modulation (FiLM)~\cite{Perez2018FiLM}, originally proposed for visual reasoning, addresses this by conditioning network activations on an external context signal.
+Standard BP assumes fixed, known channel parameters. When the physical error rate drifts---as occurs on real hardware due to TLS fluctuators and calibration decay~\cite{Klimov2018,Burnett2019Decoherence}---fixed-parameter decoders face a mismatch between assumed and actual noise. Feature-wise Linear Modulation (FiLM)~\cite{Perez2018FiLM}, originally proposed for visual reasoning, addresses this by conditioning network activations on an external context signal.
 
 A FiLM generator network maps a scalar noise estimate~$\phat$ to per-layer affine modulation parameters:
 \begin{equation}
@@ -255,7 +255,7 @@ where $\gamma^{(\ell)}, \beta^{(\ell)} \in \R^{d_h}$. Each GNN layer's output is
 \tilde{\bvec{h}}^{(\ell)} = \gamma^{(\ell)} \odot \bvec{h}^{(\ell)} + \beta^{(\ell)}
 \label{eq:film}
 \end{equation}
-The noise estimate~$\phat$ is derived from the syndrome weight---the fraction of triggered stabilizer measurements---which correlates with the instantaneous error rate and requires no external calibration. During training, each mini-batch samples $p$ uniformly from $[0.01, 0.10]$, exposing the FiLM generator to a broad operating range. At inference, the same model adapts to the prevailing noise rate. To our knowledge, this constitutes the first application of FiLM conditioning to QLDPC decoding; prior work~\cite{Caune2025FiLM} has applied FiLM exclusively to surface codes.
+The noise estimate~$\phat$ is derived from the syndrome weight---the fraction of triggered stabilizer measurements---which correlates with the instantaneous error rate and requires no external calibration. During training, each mini-batch samples $p$ uniformly from $[0.01, 0.10]$, exposing the FiLM generator to a broad operating range. At inference, the same model adapts to the prevailing noise rate. To our knowledge, this constitutes the first application of FiLM conditioning to QLDPC decoding; prior work~\cite{Stein2026FiLM} has applied FiLM to repetition codes.
 
 \subsection{Differentiable neural belief propagation}\label{sec:neuralbp}
 
@@ -407,7 +407,7 @@ Interleaved split $(T_1, T_2)$ & (5, 5) / (50, 50) \\
 
 \textbf{BP convergence rate}: fraction of shots where all parity checks are satisfied.
 
-\textbf{McNemar's paired test}~\cite{McNemar1947Note}: for binary decoder outcomes,
+\textbf{McNemar's paired test}~\cite{McNemar1947}: for binary decoder outcomes,
 \begin{equation}
 \chi^2 = \frac{(|b - c| - 1)^2}{b + c}
 \label{eq:mcnemar}
@@ -597,7 +597,7 @@ Maan and Paler~\cite{Maan2025MLBP} replace BP entirely with a learned GNN, achie
 Gong et al.~\cite{Gong2024GNN} interleave BP with GNN layers for quantum bicycle codes, demonstrating that mid-decoding intervention lowers the error floor. Our architecture extends this with FiLM conditioning, neural BP weights, and evaluation on the larger BB family under biased and drifting noise. The independent development of interleaving strategies in~\cite{Gong2024GNN} and the present work suggests mid-decoding correction is a broadly useful principle.
 
 \paragraph{Comparison with FiLM-conditioned decoders.}
-Caune et al.~\cite{Caune2025FiLM} apply FiLM to surface code decoders. We extend this to QLDPC codes, where irregular Tanner graphs and the CSS constraint create a substantially harder decoding landscape. Our syndrome-weight noise estimation is simpler than calibration-derived estimates but generalizes across drift models.
+Stein et al.~\cite{Stein2026FiLM} apply FiLM to repetition-code decoders. We extend this to QLDPC codes, where irregular Tanner graphs and the CSS constraint create a substantially harder decoding landscape. Our syndrome-weight noise estimation is simpler than calibration-derived estimates but generalizes across drift models.
 
 \paragraph{Why not reinforcement learning?}
 The RL formulation (agent adjusts BP priors, receives binary reward) suffers from severe credit assignment: a single success/failure signal provides no information about \emph{which} of 72+ qubit priors were wrong. End-to-end differentiable training through BP provides per-qubit gradients via focal loss, yielding orders-of-magnitude better sample efficiency. FiLM conditioning handles noise adaptation that RL would otherwise require online exploration to achieve.
