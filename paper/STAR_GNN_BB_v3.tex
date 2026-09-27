@@ -324,9 +324,10 @@ per-qubit LLR correction: $\Delta_i = \mathrm{MLP}_\mathrm{read}(\bvec{h}_i^{(L)
 \includegraphics[width=\textwidth]{fig_tannergnn_arch}
 \caption{\textsc{TannerGNN} architecture. Variable and check nodes
          exchange typed messages over $L=3$ layers via edge-type-specific
-         MLPs; a GRU update aggregates messages at each node. FiLM
-         modulation (not shown) scales hidden activations with
-         syndrome-derived conditioning at each layer.}
+         MLPs; a GRU update aggregates messages at each node. In the FiLM
+         variant, FiLM modulation (not shown) scales the hidden activations
+         at each layer; the model of Sec.~\ref{sec:gnn_positive} does not
+         use FiLM.}
 \label{fig:tannergnn_arch}
 \end{figure*}
 
@@ -1167,7 +1168,7 @@ for facilitating this research and providing computational resources.
 \section*{Data and code availability}
 
 Source code, trained checkpoints, datasets and analysis scripts are
-available at \url{https://github.com/anish-chedalla/adaptive_gnn}.
+available at \url{https://github.com/kondshk/adaptive_gnn}.
 All tables and figures except the drift experiment and the interleaved
 training curves are produced by a committed script from stored
 per-shot outcomes: \texttt{audit\_headline\_v2.py} (headline result),
