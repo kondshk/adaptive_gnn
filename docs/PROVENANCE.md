@@ -27,17 +27,17 @@ Status key: **traced** = script and stored output in the repo;
 | Table 4 (GNN vs flooding, 15.4%) | `audit_confound1.py`, `audit_c1_results.json` | traced; **train/test leakage** | `audit_headline_v2.py` (step 2) |
 | Gradient audit (ratio 0.22, mean abs delta 0.854) | `audit_confound3.py`, `audit_c3_results.json` | traced | not rerun (diagnostic; used the leaky checkpoint) |
 | Capacity test (14%, 17/3, p=0.004) | `audit_confound4.py`, `audit_c4_results.json` | traced; rerun under the corrected failure definition | `audit_confound4.py` |
-| Fig. F5 (interleaved training) | none; no script or PDF in repo | untraceable | needs the original run |
+| Fig. F5 (interleaved training) | none; no script or PDF in repo | rebuilt; **not reproduced, removed** | `train_unified.py` (see below) |
 | Table 5 / Fig. F4 (GNN+OSD vs BP-OSD) | `figures/gen_F4_*.py` hard-coded numbers | regenerated | `audit_tables_v2.py gnn_vs_bposd` |
 | New: paired failure-set table (Sec. mismatch) | none (was `\pending`) | new | `audit_failure_sets.py`, `results/failure_sets/` |
 | Table 6 / Fig. F2 (oracle gap) | `figures/gen_F2_*.py` hard-coded numbers | regenerated; **noise model mis-described** | `audit_tables_v2.py oracle --anchor mean` |
-| Rate-estimating GNN (0.069 vs 0.064) | none | untraceable | needs the original code |
-| Table 7 / Fig. F3 (per-qubit OU drift) | `figures/gen_F3_*.py` hard-coded numbers | untraceable | needs the original code |
+| Rate-estimating GNN (0.069 vs 0.064) | none | rebuilt; **not reproduced, removed** | `audit_drift_v2.py single` |
+| Table 7 / Fig. F3 (per-qubit OU drift) | `figures/gen_F3_*.py` hard-coded numbers | rebuilt; **not reproduced, removed** | `audit_drift_v2.py drift` |
 | Table 8 / Fig. F6 (circuit-level) | old figure script hard-coded numbers | regenerated; **result reversed** | `audit_circuit_v2.py` (step 3) |
 | Contributions: "40x ... McNemar p = 9.4e-38" | none | not reproduced as stated | see Fig. F1 |
 
-Figures F1, F2, F4 and F6 now read their numbers from `results/`; F3 still
-hard-codes its numbers because no source exists.
+Figures F1, F2, F4 and F6 now read their numbers from `results/`. F3 and F5
+were removed from the paper.
 
 ## Details
 
@@ -165,11 +165,42 @@ have McNemar p < 1e-20. Notes:
   similar gaps (10-66% at the paper points) but at a much higher total noise
   for sigma = 1.
 
-### Table 7 / Fig. F3 and the rate-estimating GNN
-No code in the repo implements per-qubit OU drift with a W = 32 window, the
-"Empir" frequency estimator, or a GNN that estimates per-qubit rates. Fig. F3
-hard-codes the table values. These results cannot be checked and must be
-re-run from the original code or removed.
+### Table 7 / Fig. F3, the rate-estimating GNN, and Fig. F5 (removed)
+No code for these existed, so they were rebuilt from the paper's description
+and removed because the rebuilt results do not support the paper's claims.
+
+Drift (`audit_drift_v2.py drift`, `results/drift_v2/drift.json`): per-qubit
+log-rates follow a discrete OU process with stationary s.d. 1 and per-shot
+innovation s.d. `vol`, mean rate p = 0.04; serial BP-OSD with oracle, stale
+(t = 0), uniform-mean, frequency-estimator (last 32 shots of its own decoded
+errors, 16 pseudo-counts) and GNN-estimator (last 32 syndromes) priors;
+6,000 scored shots per volatility.
+
+| vol | Oracle | Stale | Mean | Empir | GNN |
+|---|---|---|---|---|---|
+| 0 | 0.019 | 0.019 | 0.076 | 0.025 | 0.040 |
+| 0.1 | 0.028 | 0.088 | 0.068 | 0.040 | 0.052 |
+| 0.35 | 0.022 | 0.081 | 0.066 | 0.051 | 0.060 |
+| 0.5 | 0.022 | 0.072 | 0.065 | 0.061 | 0.061 |
+
+The paper's central claim, that the GNN beats stale calibration only at the
+highest volatility, fails (it beats stale at every nonzero volatility), and
+the GNN ties the frequency estimator at vol = 0.5 (McNemar p = 1.0) instead
+of losing. The paper's oracle LER falling from 0.033 to 0.004 with volatility
+does not occur. The paper does not define `vol`, so its time scale may differ.
+
+Single-shot estimator (`audit_drift_v2.py single`): with a field redrawn
+every shot (sigma = 1), a GNN rate estimator is no better than the uniform
+mean prior (0.0680 vs 0.0675, McNemar p = 0.58), consistent with the
+Bayes-optimality argument, but not "significantly worse" as the paper stated
+(0.069 vs 0.064, p = 2.7e-4).
+
+Interleaved model (`train_unified.py`, the `run_full_pipeline.sh` command;
+`results/interleaved_v2/`): the committed code crashed at the end of epoch 1
+because validation did not use the interleaved forward pass; after fixing
+that, validation loss keeps decreasing well past epoch 1, contradicting
+Fig. F5 ("best checkpoint at epoch 1, validation loss increases thereafter").
+The paper now states only that the interleaved architecture is not evaluated.
 
 ### Table 8 / Fig. F6: circuit level
 Regenerated in step 3 (`audit_circuit_v2.py`, `results/circuit_v2/`). The

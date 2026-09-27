@@ -705,19 +705,8 @@ trained on 1{,}000 fixed syndromes for 50 epochs reduced the failure count
 on those same syndromes from 105 to 93 ($11\%$; $n_{10}=15$, $n_{01}=3$,
 McNemar $p=0.0095$). This experiment tests the ability of the architecture and
 optimizer to fit the supplied examples; it is not a generalization
-result. The interleaved model reached its best validation checkpoint at
-epoch 1 and did not train successfully, so no performance conclusion
-about that architecture is drawn from the current run (see Limitations).
+result. The interleaved architecture of Sec.~\ref{sec:neuralbp} is not evaluated in this work.
 
-\begin{figure}[t]
-\centering
-\includegraphics[width=\columnwidth]{fig_F5_interleaved_training}
-\caption{Interleaved model training curves (183k parameters).
-         The best validation checkpoint occurs at epoch~1 and the
-         validation loss increases thereafter. The current run does
-         not provide a trained interleaved decoder for comparison.}
-\label{fig:interleaved_training}
-\end{figure}
 
 \subsection{Training/evaluation baseline mismatch}\label{sec:mismatch}
 
@@ -892,56 +881,7 @@ recoverable from a single syndrome shot under i.i.d.\ per-qubit
 noise: with a fresh field redrawn every shot, the uniform mean
 prior is Bayes-optimal within the class of estimators that observe
 only the syndrome, so no syndrome-conditioned GNN can do better
-than the mean prior in this regime. A GNN that attempts to estimate
-per-qubit rates from a single syndrome is significantly
-\emph{worse} than the mean prior at $\sigma=1.0$ (GNN LER = 0.069
-vs.\ mean LER = 0.064, McNemar $p = 2.7\times10^{-4}$)---not
-because the architecture is broken, but because the task is
-information-theoretically infeasible.
-
-\subsection{Drift adaptation}\label{sec:drift}
-
-Under persistent OU drift ($\sigma=1.0$, $W=32$-round window,
-$\code{72}{12}{6}$, $p=0.04$, 6{,}000 shots), the GNN beats
-stale calibration only at the highest tested drift volatility.
-
-\begin{table*}[t]
-\centering
-\caption{LER under per-qubit OU drift by volatility (vol).
-         ``Empir'': non-learned per-qubit frequency estimator.}
-\label{tab:drift}
-\begin{tabular}{@{}lccccl@{}}
-\toprule
-vol & Oracle & Stale & Empir & GNN & Verdict \\
-\midrule
-0.00 & 0.033 & 0.033 & 0.057 & 0.064 & GNN worse, $p=5\!\times\!10^{-36}$ \\
-0.10 & 0.031 & 0.038 & 0.057 & 0.067 & GNN worse, $p=8\!\times\!10^{-30}$ \\
-0.35 & 0.005 & 0.027 & 0.038 & 0.050 & GNN worse, $p=5\!\times\!10^{-19}$ \\
-0.50 & 0.004 & 0.052 & 0.035 & \textbf{0.044} & GNN beats stale, $p=0.005$ \\
-\bottomrule
-\end{tabular}
-\end{table*}
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=\columnwidth]{fig_F3_drift_adaptation}
-\caption{LER vs.\ OU drift volatility for four decoder configurations
-         on $\code{72}{12}{6}$, $p=0.04$, $\sigma_\mathrm{OU}=1.0$, 6{,}000 shots.
-         Star marks the single operating point (vol$=0.5$) where GNN
-         beats stale calibration ($p=0.005$); GNN is beaten by the
-         empirical frequency estimator at every volatility level.}
-\label{fig:drift_curve}
-\end{figure}
-
-Table~\ref{tab:drift} and Fig.~\ref{fig:drift_curve} show that the GNN beats stale calibration
-at vol$=0.5$ ($p=0.005$, 158 vs.\ 111 discordant pairs), but
-is beaten by the non-learned empirical frequency estimator at
-every volatility level (GNN vs.\ empir: $p = 2.7\times10^{-8}$
-at vol$=0.5$, GNN worse). Under independent per-qubit drift,
-direct per-qubit syndrome frequency counting captures most of
-the available signal, leaving little room for a learned estimator.
-Whether spatial correlation structure between qubits would shift
-this result is an open question.
+than the mean prior in this regime.
 
 \subsection{Circuit-level evaluation}\label{sec:circuit}
 
@@ -1076,9 +1016,9 @@ and side information are strengthened.
 Gong et al.~\cite{Gong2024GNN} interleave differentiable BP stages with
 GNN corrections on the same sparse graph and show error-floor
 improvements over several post-processing approaches. Our interleaved
-variant follows the same broad design principle, but the checkpoint
-reported here does not train successfully. We therefore do not claim a
-competitive result for that architecture.
+variant follows the same broad design principle, but its decoding
+performance is not evaluated here, so we make no claim for that
+architecture.
 
 Recent circuit-level work on BB codes also reports neural decoders that
 can outperform BP-OSD on the $\code{72}{12}{6}$ code while retaining a
@@ -1123,8 +1063,8 @@ not been established in the present experiments.
       and applied to both CSS components, which is suboptimal under
       $\eta=20$ biased noise; separate $Z$ and $X$ readout heads are the
       natural fix.
-\item The interleaved model reached its best validation checkpoint at
-      epoch~1 and is not evaluated.
+\item The interleaved architecture and the FiLM variant are described but
+      their decoding performance is not evaluated.
 \item The circuit-level study uses one code, 6 rounds and a biased
       single-qubit channel after each gate; two-qubit correlated faults,
       leakage and crosstalk are not modelled, and the paper's operating
@@ -1169,8 +1109,7 @@ for facilitating this research and providing computational resources.
 
 Source code, trained checkpoints, datasets and analysis scripts are
 available at \url{https://github.com/kondshk/adaptive_gnn}.
-All tables and figures except the drift experiment and the interleaved
-training curves are produced by a committed script from stored
+All tables and figures are produced by a committed script from stored
 per-shot outcomes: \texttt{audit\_headline\_v2.py} (headline result),
 \texttt{audit\_tables\_v2.py} (baseline, invariance, BP-OSD and oracle
 tables), \texttt{audit\_failure\_sets.py} (failure sets) and

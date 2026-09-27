@@ -14,13 +14,14 @@ in `docs/revision/bib_additions.bib`.
 | `fig_F4_phase4_ler.pdf` | regenerated from `results/tables_v2/gnn_vs_bposd.json` |
 | `fig_F6_circuit_oracle.pdf` | new; replaces `fig_F6_circuit_null` |
 | `fig_interleaved_pipeline.pdf` | Figure 2, larger fonts |
-| `fig_F3_drift_adaptation.pdf` | unchanged (no source data in the repo) |
 
-Three figures exist only in the Overleaf project and are not here:
-`fig_tannergnn_arch`, `fig_experimental_pipeline`,
-`fig_F5_interleaved_training`. To build, upload the `.tex`, the `.bib` and
+Two figures exist only in the Overleaf project and are not here:
+`fig_tannergnn_arch` and `fig_experimental_pipeline`. The drift experiment
+(Table 7, `fig_F3_drift_adaptation`) and `fig_F5_interleaved_training` were
+rebuilt, did not reproduce, and have been removed from the paper; delete
+them from the Overleaf project too. To build, upload the `.tex`, the `.bib` and
 the figures above into the Overleaf project next to those three.
 
 Builds cleanly with `pdflatex`, `bibtex`, `pdflatex`, `pdflatex` (quantumarticle
-class, 14 pages): no errors, no BibTeX warnings, no undefined references,
+class, 13 pages): no errors, no BibTeX warnings, no undefined references,
 no overfull boxes.
