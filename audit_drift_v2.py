@@ -138,7 +138,7 @@ def train_estimator(w, n_train, seed, epochs=30):
         model.eval()
         with torch.no_grad():
             vl = sum(torch.sum((model(b).view(-1) - b.y) ** 2).item() for b in va) / (n_val * N)
-        hist.append(dict(epoch=ep, train_mse=tot / ((n_train - n_val) * N), val_mse=vl))
+        hist.append(dict(epoch=ep, train_mse=tot / (n_train - n_val), val_mse=vl))
         print(f"W={w} ep {ep:2d} train {hist[-1]['train_mse']:.4f} val {vl:.4f}", flush=True)
         if vl < best:
             best, best_state = vl, {k: v.clone() for k, v in model.state_dict().items()}
