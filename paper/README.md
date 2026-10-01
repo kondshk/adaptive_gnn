@@ -14,12 +14,13 @@ in `docs/revision/bib_additions.bib`.
 | `fig_F4_phase4_ler.pdf` | regenerated from `results/tables_v2/gnn_vs_bposd.json` |
 | `fig_F6_circuit_oracle.pdf` | new; replaces `fig_F6_circuit_null` |
 | `fig_interleaved_pipeline.pdf` | Figure 2, larger fonts |
+| `fig_F3_drift_adaptation.pdf` | unchanged original (kept at the authors' request) |
 
 Two figures exist only in the Overleaf project and are not here:
-`fig_tannergnn_arch` and `fig_experimental_pipeline`. The drift experiment
-(Table 7, `fig_F3_drift_adaptation`) and `fig_F5_interleaved_training` were
-rebuilt, did not reproduce, and have been removed from the paper; delete
-them from the Overleaf project too. To build, upload the `.tex`, the `.bib` and
+`fig_tannergnn_arch` and `fig_experimental_pipeline`. `fig_F5_interleaved_training` was rebuilt, did not reproduce, and has been
+removed from the paper. The drift experiment (Table 7,
+`fig_F3_drift_adaptation`) is kept at the authors' request with its original
+numbers; it has no source code in the repo (see docs/PROVENANCE.md). To build, upload the `.tex`, the `.bib` and
 the figures above into the Overleaf project next to those three.
 
 Builds cleanly with `pdflatex`, `bibtex`, `pdflatex`, `pdflatex` (quantumarticle

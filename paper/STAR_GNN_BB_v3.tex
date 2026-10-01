@@ -883,6 +883,50 @@ prior is Bayes-optimal within the class of estimators that observe
 only the syndrome, so no syndrome-conditioned GNN can do better
 than the mean prior in this regime.
 
+\subsection{Drift adaptation}\label{sec:drift}
+
+Under persistent OU drift ($\sigma=1.0$, $W=32$-round window,
+$\code{72}{12}{6}$, $p=0.04$, 6{,}000 shots), the GNN beats
+stale calibration only at the highest tested drift volatility.
+
+\begin{table*}[t]
+\centering
+\caption{LER under per-qubit OU drift by volatility (vol).
+         ``Empir'': non-learned per-qubit frequency estimator.}
+\label{tab:drift}
+\begin{tabular}{@{}lccccl@{}}
+\toprule
+vol & Oracle & Stale & Empir & GNN & Verdict \\
+\midrule
+0.00 & 0.033 & 0.033 & 0.057 & 0.064 & GNN worse, $p=5\!\times\!10^{-36}$ \\
+0.10 & 0.031 & 0.038 & 0.057 & 0.067 & GNN worse, $p=8\!\times\!10^{-30}$ \\
+0.35 & 0.005 & 0.027 & 0.038 & 0.050 & GNN worse, $p=5\!\times\!10^{-19}$ \\
+0.50 & 0.004 & 0.052 & 0.035 & \textbf{0.044} & GNN beats stale, $p=0.005$ \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{fig_F3_drift_adaptation}
+\caption{LER vs.\ OU drift volatility for four decoder configurations
+         on $\code{72}{12}{6}$, $p=0.04$, $\sigma_\mathrm{OU}=1.0$, 6{,}000 shots.
+         Star marks the single operating point (vol$=0.5$) where GNN
+         beats stale calibration ($p=0.005$); GNN is beaten by the
+         empirical frequency estimator at every volatility level.}
+\label{fig:drift_curve}
+\end{figure}
+
+Table~\ref{tab:drift} and Fig.~\ref{fig:drift_curve} show that the GNN beats stale calibration
+at vol$=0.5$ ($p=0.005$, 158 vs.\ 111 discordant pairs), but
+is beaten by the non-learned empirical frequency estimator at
+every volatility level (GNN vs.\ empir: $p = 2.7\times10^{-8}$
+at vol$=0.5$, GNN worse). Under independent per-qubit drift,
+direct per-qubit syndrome frequency counting captures most of
+the available signal, leaving little room for a learned estimator.
+Whether spatial correlation structure between qubits would shift
+this result is an open question.
+
 \subsection{Circuit-level evaluation}\label{sec:circuit}
 
 \paragraph{Circuit and noise model.}
@@ -1045,8 +1089,8 @@ of the min-sum BP prior cannot reproduce the effect of spatially varying
 reliabilities. These results motivate testing spatially resolved FiLM
 (SRCF), in which per-qubit parameters $(\gamma_i, \beta_i)$ are
 conditioned on persistent hardware calibration data rather than on a
-single graph-wide scalar. Such a decoder should be compared with a non-learned per-qubit frequency
-estimator and evaluated at circuit level, where the oracle gap remains
+single graph-wide scalar. Such a decoder should be compared with the non-learned frequency
+estimator of Sec.~\ref{sec:drift} and evaluated at circuit level, where the oracle gap remains
 large ($56\%$ at $p_\mathrm{mean}=0.006$, Sec.~\ref{sec:circuit}).
 Whether such rates can be estimated well enough from syndrome history has
 not been established in the present experiments.
@@ -1109,7 +1153,8 @@ for facilitating this research and providing computational resources.
 
 Source code, trained checkpoints, datasets and analysis scripts are
 available at \url{https://github.com/kondshk/adaptive_gnn}.
-All tables and figures are produced by a committed script from stored
+All tables and figures except the drift experiment (Sec.~\ref{sec:drift})
+are produced by a committed script from stored
 per-shot outcomes: \texttt{audit\_headline\_v2.py} (headline result),
 \texttt{audit\_tables\_v2.py} (baseline, invariance, BP-OSD and oracle
 tables), \texttt{audit\_failure\_sets.py} (failure sets) and

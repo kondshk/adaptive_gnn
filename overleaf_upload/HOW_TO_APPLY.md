@@ -11,8 +11,9 @@
    - `fig_F6_circuit_oracle.pdf`     (circuit-level oracle gap, new file name)
    - `fig_interleaved_pipeline.pdf`  (Fig. 2, larger fonts)
 4. Delete from the project (no longer used):
-   `fig_F3_drift_adaptation`, `fig_F5_interleaved_training`, `fig_F6_circuit_null`.
-5. Keep your existing `fig_tannergnn_arch` and `fig_experimental_pipeline`.
+   `fig_F5_interleaved_training` and `fig_F6_circuit_null`.
+5. Keep your existing `fig_tannergnn_arch`, `fig_experimental_pipeline` and
+   `fig_F3_drift_adaptation` (unchanged).
 6. Recompile (Overleaf runs BibTeX automatically). Expect 13 pages.
 
 `STAR_GNN_BB_v2_to_v3_tracked_changes.pdf` shows every edit against the

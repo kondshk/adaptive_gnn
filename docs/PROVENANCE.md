@@ -32,12 +32,13 @@ Status key: **traced** = script and stored output in the repo;
 | New: paired failure-set table (Sec. mismatch) | none (was `\pending`) | new | `audit_failure_sets.py`, `results/failure_sets/` |
 | Table 6 / Fig. F2 (oracle gap) | `figures/gen_F2_*.py` hard-coded numbers | regenerated; **noise model mis-described** | `audit_tables_v2.py oracle --anchor mean` |
 | Rate-estimating GNN (0.069 vs 0.064) | none | rebuilt; **not reproduced, removed** | `audit_drift_v2.py single` |
-| Table 7 / Fig. F3 (per-qubit OU drift) | `figures/gen_F3_*.py` hard-coded numbers | rebuilt; **not reproduced, removed** | `audit_drift_v2.py drift` |
+| Table 7 / Fig. F3 (per-qubit OU drift) | `figures/gen_F3_*.py` hard-coded numbers | rebuilt, not reproduced; **kept with original numbers at the authors' request** | `audit_drift_v2.py drift` |
 | Table 8 / Fig. F6 (circuit-level) | old figure script hard-coded numbers | regenerated; **result reversed** | `audit_circuit_v2.py` (step 3) |
 | Contributions: "40x ... McNemar p = 9.4e-38" | none | not reproduced as stated | see Fig. F1 |
 
-Figures F1, F2, F4 and F6 now read their numbers from `results/`. F3 and F5
-were removed from the paper.
+Figures F1, F2, F4 and F6 now read their numbers from `results/`. F5 was
+removed; F3 is the original figure with hard-coded numbers, kept at the
+authors' request.
 
 ## Details
 
@@ -165,7 +166,7 @@ have McNemar p < 1e-20. Notes:
   similar gaps (10-66% at the paper points) but at a much higher total noise
   for sigma = 1.
 
-### Table 7 / Fig. F3, the rate-estimating GNN, and Fig. F5 (removed)
+### Table 7 / Fig. F3 (kept, unverified), the rate-estimating GNN and Fig. F5 (removed)
 No code for these existed, so they were rebuilt from the paper's description
 and removed because the rebuilt results do not support the paper's claims.
 
@@ -188,6 +189,8 @@ highest volatility, fails (it beats stale at every nonzero volatility), and
 the GNN ties the frequency estimator at vol = 0.5 (McNemar p = 1.0) instead
 of losing. The paper's oracle LER falling from 0.033 to 0.004 with volatility
 does not occur. The paper does not define `vol`, so its time scale may differ.
+The authors chose to keep the original Table 7 and Fig. F3; their numbers
+remain without a source script in this repository.
 
 Single-shot estimator (`audit_drift_v2.py single`): with a field redrawn
 every shot (sigma = 1), a GNN rate estimator is no better than the uniform
