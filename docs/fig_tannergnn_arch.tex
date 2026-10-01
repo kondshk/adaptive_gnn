@@ -54,7 +54,7 @@
         inner xsep=8pt, inner ysep=8pt, fit=(msg)(agg)(filmop)(gru)(res)] (layer) {};
 \end{scope}
 \node[font=\sffamily\Large\bfseries, text=gnnblue, anchor=south west] at ($(layer.north west)+(0.05,0.05)$)
-     {Typed message passing $\times L$ ($L=3$)};
+     {Typed message passing $\times L$};
 
 \draw[arr] (proj.east) -- node[lbl, above] {$\mathbf{h}^{(0)}$} (msg.west);
 \draw[arr] (msg) -- (agg);

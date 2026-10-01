@@ -334,7 +334,7 @@ per-qubit LLR correction: $\Delta_i = \mathrm{MLP}_\mathrm{read}(\bvec{h}_i^{(L)
 The current implementation applies the same scalar $\Delta_i$ to
 both $\llr_{z,i}$ and $\llr_{x,i}$, and computes GNN input
 features from a single prior LLR $\ell$. Under $\eta = 20$, $\llr_{z,i}$
-and $\llr_{x,i}$ differ substantially (factor $\approx 1.7$ in
+and $\llr_{x,i}$ differ substantially (factor $\approx 1.9$ in
 LLR magnitude at $p=0.04$), so a single correction cannot
 simultaneously be optimal for both error types. Separate $Z$- and
 $X$-readout heads provide a direct way to remove this coupling and should
@@ -708,7 +708,7 @@ Although the GNN improves flooding BP, the same correction does not
 improve the serial min-sum BP-OSD reference configuration. Note that Tables~\ref{tab:gnn_flooding}
 and~\ref{tab:gnn_null} report different evaluation regimes
 (Regime~A and Regime~B of Sec.~\ref{sec:regimes}) on different
-syndrome sets, and their LER values are not directly comparable:
+syndrome sets, and their LER values are not directly comparable.
 
 \begin{table}[t]
 \centering
@@ -744,17 +744,14 @@ $p$ & Serial BP-OSD & GNN+OSD & Seeds worse \\
 Table~\ref{tab:gnn_null} and Fig.~\ref{fig:gnn_null_curve} show that
 the GNN-corrected decoder never improves on serial BP-OSD: at $p=0.02$
 one seed of five is significantly worse, and from $p=0.03$ on 14 of 15
-seed--error-rate pairs are significantly \emph{worse}. The same checkpoint improves flooding BP, so these
+seed--error-rate pairs are significantly \emph{worse}. The same checkpoints improve flooding BP, so these
 data show that the learned correction does not transfer unchanged to the
 stronger decoder.
 
 The GNN was optimized through a
 10-iteration flooding-BP computation graph and is then inserted ahead of
 a decoder with a different schedule, iteration budget, and OSD
-post-processing. The experiment therefore does not establish that LLR
-corrections learned through the flooding-BP computation graph remain
-useful after the schedule, iteration budget, and post-processing are
-changed.
+post-processing.
 
 \begin{table}[t]
 \centering
@@ -1076,8 +1073,6 @@ experiments.
       extrapolated to the larger codes.
 \item The interleaved and FiLM architectures are described but their
       decoding performance is not evaluated.
-\item All training and evaluation used CPU only, which limited
-      hyperparameter search and training duration.
 \item The single per-qubit correction $\Delta_i$ is applied to
       both $\llr_{z,i}$ and $\llr_{x,i}$, which is suboptimal
       under $\eta = 20$ biased noise; separate $Z$/$X$ readout
@@ -1134,6 +1129,7 @@ behind every table and figure except the drift experiment
 sampled directly with NumPy; circuit-level data are generated with
 Stim~\cite{Gidney2021Stim}.
 
+\setlength{\bibsep}{1pt plus 0.3ex}
 \bibliographystyle{quantum}
 \bibliography{references}
 

@@ -781,5 +781,31 @@ R(r"""         mean-prior decoder (only the oracle) fails.}""",
          $10^4$ shots means LER $<3.8\times10^{-4}$ (95\% upper bound).}""",'circ_caption')
 log.append('circuit_fill')
 
+
+# ---- Final proofreading fixes (minor) ----
+R(r"""post-processing. The experiment therefore does not establish that LLR
+corrections learned through the flooding-BP computation graph remain
+useful after the schedule, iteration budget, and post-processing are
+changed.
+
+\begin{table}[t]""", r"""post-processing.
+
+\begin{table}[t]""", 'fix_redundant')
+R(r"""syndrome sets, and their LER values are not directly comparable:""",
+  r"""syndrome sets, and their LER values are not directly comparable.""", 'fix_colon')
+R(r"""The same checkpoint improves flooding BP, so these""",
+  r"""The same checkpoints improve flooding BP, so these""", 'fix_plural')
+R(r"""(factor $\approx 1.7$ in""", r"""(factor $\approx 1.9$ in""", 'fix_ratio')
+
+
+# ---- Keep the last reference on the final page ----
+R(r"""\bibliographystyle{quantum}""", r"""\setlength{\bibsep}{1pt plus 0.3ex}
+\bibliographystyle{quantum}""", 'fix_lastpage')
+
+
+R(r"""\item All training and evaluation used CPU only, which limited
+      hyperparameter search and training duration.
+""", "", 'fix_dup_limitation')
+
 open(DST,'w').write(s)
 print('ok', log)
