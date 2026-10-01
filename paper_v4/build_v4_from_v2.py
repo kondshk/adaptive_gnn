@@ -751,5 +751,35 @@ R(r"""both $\llr_{z,i}$ and $\llr_{x,i}$, and computes GNN input
 features from their average.""",r"""both $\llr_{z,i}$ and $\llr_{x,i}$, and computes GNN input
 features from a single prior LLR $\ell$.""",'remark1')
 
+
+# ---- Circuit-level numbers (results/circuit_v2/oracle_v4_*.json) ----
+FILL = {
+ '<<PROFILES_LOW>>': '20',
+ '<<PROFILES_HIGH>>': '40',
+ '<<CIRC_ROWS>>': r"""0.001 & 10{,}000 & 0 & 0 & 0/0 & --- \\
+0.003 & 10{,}000 & 0 & 0 & 0/0 & --- \\
+0.01  & 20{,}000 & $1.35\%$ & $0.60\%$ & 177/28 & $5\!\times\!10^{-25}$ \\""",
+ '<<CIRC_TEXT>>': r"""Knowing the per-qubit rates also helps at circuit level
+(Table~\ref{tab:circuit}, Fig.~\ref{fig:circuit_null}). At $p=0.01$ the
+oracle reduces the logical error rate from $1.35\%$ to $0.60\%$ ($55\%$;
+McNemar $p=4.8\times10^{-25}$), and it is better on 38 of 40 independent
+rate profiles (sign test $p=1.5\times10^{-9}$), so the result is not
+driven by a few extreme profiles. At $p=0.001$ and $p=0.003$ neither
+decoder fails in $10^4$ shots, so these operating points cannot resolve a
+gap. The circuit-level gap is somewhat smaller than the code-capacity gap
+on the same code ($65\%$ at $\sigma=1$, Table~\ref{tab:oracle}), at a
+different operating point, but it does not vanish.""",
+ '<<CONCL_CIRC>>': r"""under circuit-level noise it reduces BP-OSD's LER by $55\%$ at
+$p=0.01$.""",
+}
+for k, v in FILL.items():
+    if s.count(k) != 1:
+        print('FAIL fill', k, s.count(k)); sys.exit(1)
+    s = s.replace(k, v)
+R(r"""         mean-prior decoder (only the oracle) fails.}""",
+  r"""         mean-prior decoder (only the oracle) fails. Zero failures in
+         $10^4$ shots means LER $<3.8\times10^{-4}$ (95\% upper bound).}""",'circ_caption')
+log.append('circuit_fill')
+
 open(DST,'w').write(s)
 print('ok', log)

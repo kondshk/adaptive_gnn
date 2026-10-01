@@ -951,7 +951,7 @@ $p$ & Shots & Mean prior & Oracle & $n_{10}/n_{01}$ & $p_\mathrm{McN}$ \\
 \midrule
 0.001 & 10{,}000 & 0 & 0 & 0/0 & --- \\
 0.003 & 10{,}000 & 0 & 0 & 0/0 & --- \\
-0.01  & 20{,}000 & \pending{running} & \pending{running} & \pending{} & \pending{} \\
+0.01  & 20{,}000 & $1.35\%$ & $0.60\%$ & 177/28 & $5\!\times\!10^{-25}$ \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -966,9 +966,16 @@ $p$ & Shots & Mean prior & Oracle & $n_{10}/n_{01}$ & $p_\mathrm{McN}$ \\
 \label{fig:circuit_null}
 \end{figure}
 
-At $p=0.001$ and $p=0.003$ neither decoder fails in $10^4$ shots, so
-these operating points cannot resolve a gap. \pending{Result at $p=0.01$
-(20{,}000 shots) being finalised.}
+Knowing the per-qubit rates also helps at circuit level
+(Table~\ref{tab:circuit}, Fig.~\ref{fig:circuit_null}). At $p=0.01$ the
+oracle reduces the logical error rate from $1.35\%$ to $0.60\%$ ($55\%$;
+McNemar $p=4.8\times10^{-25}$), and it is better on 38 of 40 independent
+rate profiles (sign test $p=1.5\times10^{-9}$), so the result is not
+driven by a few extreme profiles. At $p=0.001$ and $p=0.003$ neither
+decoder fails in $10^4$ shots, so these operating points cannot resolve a
+gap. The circuit-level gap is somewhat smaller than the code-capacity gap
+on the same code ($65\%$ at $\sigma=1$, Table~\ref{tab:oracle}), at a
+different operating point, but it does not vanish.
 
 % ============================================================
 %  VI. DISCUSSION
@@ -1106,7 +1113,8 @@ noise estimate as context.
 The synthetic oracle experiments identify per-qubit calibration as the
 more informative adaptive signal in the tested setting: revealing the
 true per-qubit rates substantially improves BP-OSD under heterogeneous
-noise, and \pending{circuit-level result at $p=0.01$ being finalised.} The current cross-code experiments do not
+noise, and under circuit-level noise it reduces BP-OSD's LER by $55\%$ at
+$p=0.01$. The current cross-code experiments do not
 isolate how this gain scales with distance. A direct next test is to condition a
 learned decoder on persistent spatial calibration data and compare it
 against a fully specified serial BP-OSD baseline and the non-learned
