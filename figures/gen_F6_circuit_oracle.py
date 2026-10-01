@@ -13,9 +13,15 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 
+import sys
+
 ROOT = Path(__file__).resolve().parent.parent
+# Usage: gen_F6_circuit_oracle.py [glob] [output.pdf] [x-label symbol]
+PATTERN = sys.argv[1] if len(sys.argv) > 1 else "oracle_*.json"
+OUTFILE = sys.argv[2] if len(sys.argv) > 2 else None
+XSYM = sys.argv[3] if len(sys.argv) > 3 else r"p_\mathrm{mean}"
 recs = {}
-for f in sorted((ROOT / "results" / "circuit_v2").glob("oracle_*.json")):
+for f in sorted((ROOT / "results" / "circuit_v2").glob(PATTERN)):
     for v in json.loads(f.read_text()).values():
         recs[v["p_mean"]] = v
 ps = sorted(recs)
@@ -64,7 +70,7 @@ ax.set_yscale("log")
 ax.set_ylim(floor, 0.1)
 ax.set_xlim(-0.5, len(ps) - 0.5)
 ax.set_xticks(x)
-ax.set_xticklabels([rf"$p_\mathrm{{mean}}={p:g}$" for p in ps])
+ax.set_xticklabels([rf"${XSYM}={p:g}$" for p in ps])
 ax.set_ylabel("Logical error rate")
 ax.set_title(r"$[\![72,12,6]\!]$, 6 rounds, $\eta=20$, log-normal $\sigma=1$" "\n"
              r"labels: discordant pairs $n_{10}/n_{01}$ and McNemar $p$", pad=4, fontsize=7)
@@ -74,7 +80,7 @@ ax.plot([], [], marker="v", ms=6, mfc="white", mec="#555555", mew=1.2, ls="none"
         label="95% upper bound (0 failures)")
 ax.legend(loc="lower right", handlelength=1.2, handletextpad=0.4, borderpad=0.5)
 
-out = Path(__file__).parent / "fig_F6_circuit_oracle.pdf"
+out = Path(OUTFILE) if OUTFILE else Path(__file__).parent / "fig_F6_circuit_oracle.pdf"
 fig.savefig(out)
 fig.savefig(out.with_suffix(".png"), dpi=200)
 plt.close(fig)
