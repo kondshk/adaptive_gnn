@@ -413,11 +413,12 @@ stages are trained jointly through the differentiable BP unroll.
          \textsc{TannerGNN} model of Secs.~\ref{sec:gnn_positive}
          and~\ref{sec:mismatch}.}
 \label{tab:hparams}
-\begin{tabular}{@{}p{0.40\columnwidth}p{0.54\columnwidth}@{}}
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}ll@{}}
 \toprule
 \multicolumn{2}{@{}l}{\textit{GNN architecture}} \\
 \midrule
-Layers $L$ / hidden dim.\ $d_h$  & 3 / 32 \\
+Layers $L$ / width $d_h$       & 3 / 32 \\
 Edge types                      & 2 ($\Hmat_x$, $\Hmat_z$) \\
 Node update                     & GRU, residual, layer norm \\
 Node feature dim.               & 4 \\
@@ -426,13 +427,13 @@ Parameters                      & 39{,}329 \\
 \midrule
 \multicolumn{2}{@{}l}{\textit{Training}} \\
 \midrule
-Data                            & 8{,}000 shots, sinusoidal drift, $p\in[0.005,0.045]$ \\
-Loss                            & focal, $(\alpha,\gamma)=(0.25,2.0)$, on $e_z$; no syndrome term \\
-Optimizer                       & AdamW, lr $2\times10^{-3}$, weight decay $10^{-4}$ \\
+Data                            & \makecell[l]{8{,}000 shots, sinusoidal drift,\\$p\in[0.005,0.045]$} \\
+Loss                            & \makecell[l]{focal, $(\alpha,\gamma)=(0.25,2.0)$, on $e_z$;\\no syndrome term} \\
+Optimizer                       & \makecell[l]{AdamW, lr $2\times10^{-3}$,\\weight decay $10^{-4}$} \\
 Batch size / epochs             & 64 / 20, gradient clipping 1.0 \\
-Checkpoint                      & fewest failures on 4{,}000 validation shots \\
+Checkpoint                      & \makecell[l]{fewest failures on\\4{,}000 validation shots} \\
 Training seeds                  & 5 \\
-BP in training loop             & flooding min-sum, scaling 0.8, 10 iter. \\
+BP in training loop             & \makecell[l]{flooding min-sum,\\scaling 0.8, 10 iter.} \\
 \midrule
 \multicolumn{2}{@{}l}{\textit{Reference BP-OSD baseline}} \\
 \midrule
@@ -763,7 +764,8 @@ changed.
          the estimate does not reproduce the syndrome.}
 \label{tab:failure_sets}
 \footnotesize
-\begin{tabular}{@{}p{0.50\columnwidth}cc@{}}
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}lcc@{}}
 \toprule
 Decoder & Failures & Non-conv. \\
 \midrule
@@ -774,13 +776,13 @@ GNN + BP, 10 iter.      & 1{,}874--1{,}906 & 838--975 \\
 GNN + BP-OSD            & 1{,}439--1{,}451 & 0 \\
 \midrule
 \multicolumn{3}{@{}l}{\textit{Overlaps}} \\
-BP-OSD failures also failed by BP & \multicolumn{2}{c}{1{,}319 / 1{,}414 (93\%)} \\
-BP-100 failures also failed by BP & \multicolumn{2}{c}{1{,}727 / 1{,}727 (100\%)} \\
+\makecell[l]{BP-OSD failures\\also failed by BP} & \multicolumn{2}{c}{1{,}319 / 1{,}414 (93\%)} \\
+\makecell[l]{BP-100 failures\\also failed by BP} & \multicolumn{2}{c}{1{,}727 / 1{,}727 (100\%)} \\
 Shots GNN fixes for BP            & \multicolumn{2}{c}{313--370} \\
 \quad of which BP did not converge & \multicolumn{2}{c}{91--93\%} \\
 \quad of which BP-OSD also fails   & \multicolumn{2}{c}{31--36\%} \\
-BP-OSD failures also failed by GNN+BP & \multicolumn{2}{c}{87--88\%} \\
-GNN+BP-OSD vs.\ BP-OSD: newly failed / rescued & \multicolumn{2}{c}{237--282 / 206--254} \\
+\makecell[l]{BP-OSD failures also\\failed by GNN+BP} & \multicolumn{2}{c}{87--88\%} \\
+\makecell[l]{GNN+BP-OSD vs.\ BP-OSD:\\newly failed / rescued} & \multicolumn{2}{c}{237--282 / 206--254} \\
 \bottomrule
 \end{tabular}
 \end{table}
