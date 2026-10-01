@@ -126,32 +126,36 @@ def run_uniform(ps, shots, workers, variants=("fixed", "legacy"), tag=""):
 # ---------------------------------------------------------------- oracle gap
 def _oracle_profile(args):
     """One per-qubit rate profile: sample `shots` and decode with three priors."""
-    p_mean, profile, shots = args
+    p, profile, shots, anchor = args
     text = base_circuit_text()
-    ref = noisy(text, p_mean)
+    ref = noisy(text, p)
     rng = np.random.default_rng(profile)
-    scale = np.exp(SIGMA * rng.standard_normal(ref.num_qubits))
-    true_c = rescale_noise_per_qubit(ref, scale)
+    z = rng.standard_normal(ref.num_qubits)
+    # anchor "median": p is the median per-qubit rate; "mean": p is the mean rate
+    shift = 0.0 if anchor == "median" else -SIGMA ** 2 / 2
+    true_c = rescale_noise_per_qubit(ref, np.exp(SIGMA * z + shift))
     dets, obs = true_c.compile_detector_sampler(seed=profile).sample(shots, separate_observables=True)
-    mean_c = rescale_noise_per_qubit(ref, np.full(ref.num_qubits, math.exp(SIGMA ** 2 / 2)))
+    n = ref.num_qubits
+    mean_c = rescale_noise_per_qubit(ref, np.full(n, math.exp(SIGMA ** 2 / 2 + shift)))
+    median_c = rescale_noise_per_qubit(ref, np.full(n, math.exp(shift)))
     return dict(profile=profile,
                 mean=DemDecoder(mean_c).fail(dets, obs),
-                median=DemDecoder(ref).fail(dets, obs),
+                median=DemDecoder(median_c).fail(dets, obs),
                 oracle=DemDecoder(true_c).fail(dets, obs))
 
 
-def run_oracle(ps, profiles, shots_per_profile, workers, tag=""):
+def run_oracle(ps, profiles, shots_per_profile, workers, tag="", anchor="median"):
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     out = {}
     with Pool(workers) as pool:
         for i, p in enumerate(ps):
             t0 = time.time()
             ids = [1_000_000 * (i + 1) + j for j in range(profiles)]
-            res = pool.map(_oracle_profile, [(p, pid, shots_per_profile) for pid in ids])
+            res = pool.map(_oracle_profile, [(p, pid, shots_per_profile, anchor) for pid in ids])
             f = {k: np.concatenate([r[k] for r in res]) for k in ("mean", "median", "oracle")}
             per_profile = {k: [int(r[k].sum()) for r in res] for k in f}
             diff = np.array(per_profile["mean"]) - np.array(per_profile["oracle"])
-            rec = dict(p_mean=p, sigma=SIGMA, profiles=profiles, shots_per_profile=shots_per_profile,
+            rec = dict(p_mean=p, anchor=anchor, ms_scaling_factor=BPOSD["ms_scaling_factor"], sigma=SIGMA, profiles=profiles, shots_per_profile=shots_per_profile,
                        shots=len(f["oracle"]), per_profile_failures=per_profile,
                        profiles_mean_worse=int((diff > 0).sum()),
                        profiles_oracle_worse=int((diff < 0).sum()))
@@ -164,7 +168,7 @@ def run_oracle(ps, profiles, shots_per_profile, workers, tag=""):
             rec["gap_mean_vs_oracle"] = (1 - rec["oracle_failures"] / rec["mean_failures"]
                                          if rec["mean_failures"] else float("nan"))
             out[f"p{p}"] = rec
-            np.savez_compressed(OUT_DIR / f"oracle_p{p}_failures.npz", **f)
+            np.savez_compressed(OUT_DIR / f"oracle{tag}_p{p}_failures.npz", **f)
             m = rec["mcnemar_mean_vs_oracle"]
             print(f"p_mean={p}: mean {rec['mean_failures']} median {rec['median_failures']} "
                   f"oracle {rec['oracle_failures']} / {rec['shots']}; n10/n01 {m['n10']}/{m['n01']} "
@@ -184,8 +188,12 @@ if __name__ == "__main__":
     ap.add_argument("--workers", type=int, default=4)
     ap.add_argument("--variants", nargs="+", default=["fixed", "legacy"])
     ap.add_argument("--tag", default="", help="suffix for the output json")
+    ap.add_argument("--scaling", type=float, default=0.625, help="min-sum scaling factor for BP-OSD")
+    ap.add_argument("--anchor", choices=["median", "mean"], default="median",
+                    help="oracle: whether p is the median or the mean per-qubit rate")
     a = ap.parse_args()
+    BPOSD["ms_scaling_factor"] = a.scaling
     if a.uniform:
         run_uniform(a.p, a.shots, a.workers, a.variants, a.tag)
     if a.oracle:
-        run_oracle(a.p, a.profiles, a.shots_per_profile, a.workers, a.tag)
+        run_oracle(a.p, a.profiles, a.shots_per_profile, a.workers, a.tag, a.anchor)
