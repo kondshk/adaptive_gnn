@@ -1,5 +1,16 @@
 # Provenance of the paper's tables and figures
 
+> **Repository cleanup.** Files not used by the final paper
+> (`paper_v4/STAR_GNN_BB_v4.tex`) were removed from the working tree: the
+> drift and interleaved rebuilds (`audit_drift_v2.py`, `results/drift_v2/`,
+> `results/interleaved_v2/`), the median-anchored and scaling-0.625 circuit
+> runs, the v3 paper and revision files, the old evaluation pipeline and its
+> datasets. Everything referenced below that is no longer present can be
+> recovered from git history at commit `aed361a`. For the final paper's
+> figures and the commands that produce their data, see `figures/README.md`.
+> Table and section numbers below follow the reviewed draft (v2); in the
+> final paper the circuit-level table is Table 9.
+
 Audit of `STAR_GNN_BB_v2.tex` (the version with Nithin's comments). For each
 reported number: the script that produced it, the raw output it can be
 recomputed from, and whether it was reproduced.

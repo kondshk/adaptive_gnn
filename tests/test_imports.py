@@ -52,17 +52,17 @@ def test_imports() -> int:
         from gnn_pipeline.dataset import build_graph_dataset
         print("OK")
 
-        # Test CLI modules
-        print("  Importing gnn_pipeline.build_dataset... ", end="")
-        from gnn_pipeline import build_dataset
+        # Test the modules behind the paper's experiments
+        print("  Importing gnn_pipeline.decoding_failure... ", end="")
+        from gnn_pipeline import decoding_failure
         print("OK")
 
-        print("  Importing gnn_pipeline.train_selfsupervised... ", end="")
-        from gnn_pipeline import train_selfsupervised
+        print("  Importing gnn_pipeline.generate_codecap... ", end="")
+        from gnn_pipeline import generate_codecap
         print("OK")
 
-        print("  Importing gnn_pipeline.evaluate... ", end="")
-        from gnn_pipeline import evaluate
+        print("  Importing gnn_pipeline.train_unified... ", end="")
+        from gnn_pipeline import train_unified
         print("OK")
 
         print("\nAll imports successful!")

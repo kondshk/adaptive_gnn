@@ -117,20 +117,3 @@ def test_soft_values_rejected(code72):
     n = hx.shape[1]
     with pytest.raises(ValueError):
         component_failures(np.full((1, n), 0.3), np.zeros((1, hx.shape[0])), hx, lx, np.zeros((1, lx.shape[0])))
-
-
-def test_evaluate_wrappers_use_shared_definition(code72):
-    from gnn_pipeline.evaluate import _check_logical_error, _check_logical_errors_batch
-
-    hx, hz, lx, lz = code72
-    z, x = _random_errors(hx.shape[1], 200, 0.08, 7)
-    rng = np.random.default_rng(8)
-    z_hat = (z + (rng.random(z.shape) < 0.02)) % 2
-    x_syn, z_syn = (z @ hx.T) % 2, (x @ hz.T) % 2
-    obs = np.concatenate([(z @ lx.T) % 2, (x @ lz.T) % 2], axis=1)
-    expected = css_failures(z_hat, x, x_syn, z_syn, hx, hz, lx, lz, obs).failure
-    batch = _check_logical_errors_batch(z_hat, x, x_syn, z_syn, hx, hz, lx, lz, obs)
-    single = [_check_logical_error(z_hat[i], x[i], x_syn[i], z_syn[i], hx, hz, lx, lz, obs[i]) for i in range(200)]
-    np.testing.assert_array_equal(batch, expected)
-    np.testing.assert_array_equal(single, expected)
-    assert expected.any()

@@ -7,8 +7,7 @@ The DEM maps fault mechanisms to detectors and observables, enabling decoding
 of circuit-level noise (gate errors, measurement errors, idle errors, drift)
 which the code-capacity PCM cannot handle.
 
-Usage (via evaluate.py):
-    python -m gnn_pipeline.evaluate --test_npz data/circuit.npz --mode circuit_level --out_dir runs/eval_dem
+Used by audit_circuit_v2.py for the circuit-level experiments in the paper.
 """
 from __future__ import annotations
 

@@ -6,7 +6,7 @@ Provides:
   - GradientMonitor: lightweight gradient norm tracker for detecting
     vanishing/exploding gradient issues.
 
-Reusable across train_supervised.py, train_circuit.py, and train_unified.py.
+Used by train_unified.py.
 
 Usage:
     monitor = TrainingMonitor(out_dir)
