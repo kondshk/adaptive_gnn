@@ -807,5 +807,15 @@ R(r"""\item All training and evaluation used CPU only, which limited
       hyperparameter search and training duration.
 """, "", 'fix_dup_limitation')
 
+
+# ---- Gradient audit re-run on the five headline checkpoints ----
+# (audit_gradient.py, results/diagnostics/gradient_audit.json; the old values
+# came from the single-seed checkpoint behind the original 15.4% result)
+R(r"""signal through the network (input-to-readout gradient ratio $0.22$) and
+non-trivial LLR corrections (mean $|\Delta_i|=0.854$).""",
+  r"""signal through the network (input-to-readout gradient ratio $0.63$--$2.19$
+over the five seeds) and non-trivial LLR corrections (mean
+$|\Delta_i|=0.54$--$1.01$).""", 'gradient_audit')
+
 open(DST,'w').write(s)
 print('ok', log)

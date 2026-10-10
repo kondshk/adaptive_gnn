@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Generate fig_F3_drift_adaptation — column width (3.3 in).
+"""Generate fig_F3_drift_adaptation (Fig. 7) — column width (3.3 in).
+
+The values are those of Table 8, recorded from the original drift run; the
+code of that run is not part of this repository.
 
 Legend placed BELOW the axes (ncol=2) so it never covers the lines.
 """

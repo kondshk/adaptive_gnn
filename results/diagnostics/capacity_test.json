@@ -1,5 +1,4 @@
 {
-  "confound": 4,
   "code": "[[72,12,6]]",
   "data_file": "data/big72_test_p04.npz",
   "n_shots": 1000,

@@ -1,4 +1,4 @@
-# QLDPC GNN-BP Pipeline — GPU Requirements
+# Requirements. Install torch and torch-geometric first (CPU or GPU build):
 #
 # For NVIDIA GPU (CUDA 12.1):
 #   pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121

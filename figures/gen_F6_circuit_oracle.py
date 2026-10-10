@@ -82,6 +82,5 @@ ax.legend(loc="lower right", handlelength=1.2, handletextpad=0.4, borderpad=0.5)
 
 out = Path(OUTFILE) if OUTFILE else Path(__file__).parent / "fig_F6_circuit_oracle.pdf"
 fig.savefig(out)
-fig.savefig(out.with_suffix(".png"), dpi=200)
 plt.close(fig)
 print(f"Saved {out}")

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Paired failure-set analysis on the headline [[72,12,6]] test sets.
+"""Paired failure-set analysis (Table 6) on the headline [[72,12,6]] test sets.
 
 Decodes the headline_v2 test sets (p = 0.04, 20k shots; p = 0.06, 10k shots)
 with every decoder compared in the paper and analyses *which* shots fail:

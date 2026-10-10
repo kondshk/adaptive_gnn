@@ -14,10 +14,13 @@ the two components).
 
 Subcommands:
   bposd_configs   Table 3  (288 code, p=0.04, BP / BP-OSD configurations)
-  decomposition   Fig. F1  (288 code, p=0.04, flooding -> serial -> +OSD)
-  gnn_vs_bposd    Table 5 / Fig. F4 (72 code, headline_v2 GNN + BP-OSD)
-  oracle          Table 6 / Fig. F2 (per-qubit log-normal rates, 3 codes)
-  invariance      Sec. invariance: uniform-prior and eta bit-identity checks
+  decomposition   Fig. 4   (288 code, p=0.04, flooding -> serial -> +OSD)
+  gnn_vs_bposd    Table 5 / Fig. 5 (72 code, headline_v2 GNN + BP-OSD)
+  oracle          Table 7 / Fig. 6 (per-qubit log-normal rates, 3 codes;
+                  the paper uses --anchor mean, the default)
+  invariance      Sec. 5.2: uniform-prior and eta bit-identity checks
+
+Section, table and figure numbers refer to paper_v4/STAR_GNN_BB_v4.tex.
 """
 from __future__ import annotations
 
@@ -232,7 +235,7 @@ def _oracle_chunk(args):
                 oracle=decode_all(code_name, z, x, SERIAL_MS, True, priors=pq, p=p).failure)
 
 
-def run_oracle(points, sigmas, shots, workers, anchor="median"):
+def run_oracle(points, sigmas, shots, workers, anchor="mean"):
     """anchor='median': p is the median per-qubit rate (mean grows with sigma);
     anchor='mean': p is the mean rate, held fixed across sigma."""
     summ = dict(eta=ETA, shots=shots, decoder=dict(SERIAL_MS, osd=OSD_CS10), anchor=anchor,
@@ -311,8 +314,8 @@ if __name__ == "__main__":
     ap.add_argument("what", choices=["bposd_configs", "decomposition", "gnn_vs_bposd", "oracle", "invariance"])
     ap.add_argument("--shots", type=int, default=None)
     ap.add_argument("--workers", type=int, default=4)
-    ap.add_argument("--anchor", choices=["median", "mean"], default="median",
-                    help="oracle: whether p is the median or the mean per-qubit rate")
+    ap.add_argument("--anchor", choices=["median", "mean"], default="mean",
+                    help="oracle: whether p is the mean (paper) or the median per-qubit rate")
     a = ap.parse_args()
     if a.what == "bposd_configs":
         run_configs("bposd_configs", ["bp_parallel_ps30", "bp_serial_ms100", "bposd_parallel_ps30",

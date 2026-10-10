@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
-"""Headline re-run: GNN+flooding BP vs flooding BP on [[72,12,6]], leakage-free.
+"""Headline result (Table 4): GNN+flooding BP vs flooding BP on [[72,12,6]].
 
-Differences from audit_confound1.py (the script behind the original 15.4%):
+Also defines the model and training configuration of Table 2. The five
+checkpoints it writes (results/headline_v2/seed*_best.pt) are reused by
+audit_failure_sets.py, audit_gradient.py and audit_tables_v2.py gnn_vs_bposd.
+
+Differences from the single-seed run behind the 15.4% of the reviewed draft:
   * train / validation / test are generated with distinct RNG seeds, so no
     test shot shares a random stream with a training shot;
   * the checkpoint is selected on a separate validation set, and the test set
@@ -208,14 +212,15 @@ def run_baselines():
                                   ci=wilson(int(r.failure.sum()), s.shots))
         from ldpc import BpOsdDecoder
         p = float(s.pv.mean()); pz = p * ETA / (ETA + 1); px = p / (ETA + 1)
-        kw = dict(max_iter=100, bp_method="ms", ms_scaling_factor=0.625,
-                  schedule="parallel", osd_method="osd_cs", osd_order=10)
+        # serial min-sum BP-OSD-CS-10, the reference decoder of Table 2
+        kw = dict(max_iter=100, bp_method="ms", ms_scaling_factor=0.8,
+                  schedule="serial", osd_method="osd_cs", osd_order=10)
         dz = BpOsdDecoder(hx, error_rate=pz, **kw); dx = BpOsdDecoder(hz, error_rate=px, **kw)
         syn = s.syn.astype(np.uint8)
         z_hat = np.stack([dz.decode(v) for v in syn[:, :h.mx]])
         x_hat = np.stack([dx.decode(v) for v in syn[:, h.mx:]])
         r = h.failures(s, z_hat, x_hat)
-        rec["bposd_cs10"] = dict(r.counts(), ler=float(r.failure.mean()),
+        rec["bposd_serial_cs10"] = dict(r.counts(), ler=float(r.failure.mean()),
                                  ci=wilson(int(r.failure.sum()), s.shots))
         out[name] = rec
         print(name, json.dumps({k: (v["failures"], round(v["ler"], 4)) for k, v in rec.items()}))

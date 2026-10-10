@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
-"""Confound 4 – Capacity test.
+"""Capacity test (Sec. 5.3).
 
 Train GNN for 50 epochs on exactly 1000 FIXED syndromes.
 Evaluate on THOSE SAME 1000 syndromes.
 Verdict: if GNN cannot improve on its own training set, architecture is broken.
+
+Usage:
+    python audit_capacity.py      # writes results/diagnostics/capacity_test.json
 """
 from __future__ import annotations
-import sys, time, json, math
+import sys, time, json, math, pathlib
 import numpy as np
 import torch
 import torch.nn.functional as F
@@ -14,7 +17,8 @@ from torch.optim import AdamW
 from torch_geometric.data import Data
 from torch_geometric.loader import DataLoader
 
-sys.path.insert(0, '/home/user/adaptive_gnn')
+ROOT = pathlib.Path(__file__).resolve().parent
+sys.path.insert(0, str(ROOT))
 from gnn_pipeline.tanner_graph import build_tanner_graph
 from gnn_pipeline.gnn_model import TannerGNN
 from gnn_pipeline.bp_decoder import MinSumBPDecoder
@@ -25,9 +29,10 @@ torch.manual_seed(42); np.random.seed(42)
 
 # ── Load 1000 fixed syndromes ─────────────────────────────────────────────────
 DATA_FILE = 'data/big72_test_p04.npz'
+OUT = ROOT / 'results' / 'diagnostics' / 'capacity_test.json'
 N = 1000
 print(f"Loading {N} fixed syndromes from {DATA_FILE}...")
-raw = np.load(DATA_FILE, allow_pickle=True)
+raw = np.load(ROOT / DATA_FILE, allow_pickle=True)
 hx = raw['hx'].astype(np.uint8); hz = raw['hz'].astype(np.uint8)
 lx = raw['lx'].astype(np.float32); lz = raw['lz'].astype(np.float32)
 n = hx.shape[1]; mx = hx.shape[0]; mz = hz.shape[0]
@@ -147,16 +152,15 @@ for ep in range(1, 51):
               f"BP={bp_ler:.4f} | n10↑={mc['n10']} n01↓={mc['n01']} p={mc['p']:.4f} | {elapsed:.1f}s")
         if gnn_ler < best_ler:
             best_ler = gnn_ler; best_ep = ep
-            torch.save(gnn.state_dict(), '/tmp/audit_c4_best.pt')
     else:
         print(f"  Ep {ep:2d}: loss={avg_loss:.4f}")
 
 verdict = 'GNN_CAN_OVERFIT' if best_ler < bp_ler * 0.90 else 'GNN_CANNOT_OVERFIT'
-results = dict(confound=4, code='[[72,12,6]]', data_file=DATA_FILE, n_shots=N,
+results = dict(code='[[72,12,6]]', data_file=DATA_FILE, n_shots=N,
                bp_ler=bp_ler, bp_events=bp_ev, best_gnn_ler=best_ler, best_epoch=best_ep,
                epoch_results=epoch_results, verdict=verdict)
-with open('audit_c4_results.json', 'w') as f:
-    json.dump(results, f, indent=2)
-print(f"\n=== CONFOUND 4 VERDICT ===")
+OUT.parent.mkdir(parents=True, exist_ok=True)
+OUT.write_text(json.dumps(results, indent=2))
+print(f"\n=== CAPACITY TEST VERDICT ===")
 print(f"  Best GNN LER: {best_ler:.4f} (ep {best_ep}) vs BP: {bp_ler:.4f}")
 print(f"  Verdict: {verdict}")

@@ -691,8 +691,9 @@ the training range (McNemar $p<10^{-36}$ for every seed). The gain comes
 mostly from convergence: shots on which BP does not reproduce the
 syndrome fall from 1{,}740 to 838--975 of 20{,}000. Flooding BP with 100
 iterations and serial BP-OSD both remain better than GNN-BP. A gradient audit found non-zero
-signal through the network (input-to-readout gradient ratio $0.22$) and
-non-trivial LLR corrections (mean $|\Delta_i|=0.854$).
+signal through the network (input-to-readout gradient ratio $0.63$--$2.19$
+over the five seeds) and non-trivial LLR corrections (mean
+$|\Delta_i|=0.54$--$1.01$).
 
 A fixed-dataset capacity test provides an additional diagnostic: a GNN
 trained on 1{,}000 fixed syndromes for 50 epochs reduced the failure

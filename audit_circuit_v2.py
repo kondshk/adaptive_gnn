@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Circuit-level re-run on [[72,12,6]] with complete detectors (Table 8).
+"""Circuit-level oracle gap on [[72,12,6]] with complete detectors (Table 9, Fig. 8).
 
 The original circuit had no first-round Z-check detectors and no detectors
 comparing the last ancilla round with the final data measurement, so faults
@@ -8,11 +8,18 @@ This script:
 
   --uniform   BP-OSD logical failure rate under uniform circuit noise, with the
               fixed circuit and with the legacy detector set (for comparison);
-  --oracle    the Table 8 oracle-gap experiment: per-qubit log-normal rates
-              p_q = p_mean * exp(sigma * z_q), z_q ~ N(0,1), decoded with
-              (a) a uniform prior at the log-normal mean rate, (b) a uniform prior
-              at the median rate p_mean, and (c) the true per-qubit rates;
-  --summary   collect results.
+  --oracle    the Table 9 oracle-gap experiment: per-qubit log-normal rates
+              p_q = p * exp(sigma * z_q - sigma^2/2), z_q ~ N(0,1), so the mean
+              rate is p (--anchor median drops the -sigma^2/2), decoded with
+              (a) a uniform prior at the mean rate, (b) a uniform prior at the
+              median rate, and (c) the true per-qubit rates (the oracle).
+
+Decoder: serial min-sum BP-OSD-CS-10, scaling 0.8, 100 iterations, on the
+detector error model. The defaults are the paper's settings; the two runs
+behind Table 9 are
+
+  python audit_circuit_v2.py --oracle --p 0.001 0.003 --profiles 20 --shots_per_profile 500 --scaling 0.8 --anchor mean --tag _v4_paper_points
+  python audit_circuit_v2.py --oracle --p 0.01 --profiles 40 --shots_per_profile 500 --scaling 0.8 --anchor mean --tag _v4_p010
 
 Noise model (astra_stim.biased_noise.apply_biased_circuit_noise): after every
 1- and 2-qubit gate each touched qubit gets PAULI_CHANNEL_1 with
@@ -47,7 +54,7 @@ OUT_DIR = ROOT / "results" / "circuit_v2"
 ROUNDS = 6
 ETA = 20.0
 SIGMA = 1.0
-BPOSD = dict(max_iter=100, bp_method="ms", ms_scaling_factor=0.625, schedule="serial",
+BPOSD = dict(max_iter=100, bp_method="ms", ms_scaling_factor=0.8, schedule="serial",
              osd_method="osd_cs", osd_order=10)
 
 
@@ -144,7 +151,7 @@ def _oracle_profile(args):
                 oracle=DemDecoder(true_c).fail(dets, obs))
 
 
-def run_oracle(ps, profiles, shots_per_profile, workers, tag="", anchor="median"):
+def run_oracle(ps, profiles, shots_per_profile, workers, tag="", anchor="mean"):
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     out = {}
     with Pool(workers) as pool:
@@ -188,9 +195,9 @@ if __name__ == "__main__":
     ap.add_argument("--workers", type=int, default=4)
     ap.add_argument("--variants", nargs="+", default=["fixed", "legacy"])
     ap.add_argument("--tag", default="", help="suffix for the output json")
-    ap.add_argument("--scaling", type=float, default=0.625, help="min-sum scaling factor for BP-OSD")
-    ap.add_argument("--anchor", choices=["median", "mean"], default="median",
-                    help="oracle: whether p is the median or the mean per-qubit rate")
+    ap.add_argument("--scaling", type=float, default=0.8, help="min-sum scaling factor for BP-OSD")
+    ap.add_argument("--anchor", choices=["median", "mean"], default="mean",
+                    help="oracle: whether p is the mean (paper) or the median per-qubit rate")
     a = ap.parse_args()
     BPOSD["ms_scaling_factor"] = a.scaling
     if a.uniform:

@@ -1,0 +1,94 @@
+{
+  "data": "data/headline_v2/test_p04.npz (first 256 shots)",
+  "untrained": {
+    "desc": "Untrained",
+    "mi": 0.000387174884963315,
+    "mm": 0.00012213561279038134,
+    "mo": 0.003314363922982011,
+    "ratio": 0.11681725176942773,
+    "mean_delta": 0.4071638584136963,
+    "loss": 0.03120538219809532,
+    "vanishing": false,
+    "exploding": false,
+    "flag": "HEALTHY"
+  },
+  "trained": [
+    {
+      "desc": "Trained (seed0_best.pt)",
+      "mi": 0.00023498409791500308,
+      "mm": 3.9653099103513036e-05,
+      "mo": 0.0001075356613000622,
+      "ratio": 2.1851736706592746,
+      "mean_delta": 0.5416017174720764,
+      "loss": 0.0031837557908147573,
+      "vanishing": false,
+      "exploding": false,
+      "flag": "HEALTHY",
+      "checkpoint": "results/headline_v2/seed0_best.pt"
+    },
+    {
+      "desc": "Trained (seed1_best.pt)",
+      "mi": 0.0001795369571482297,
+      "mm": 2.55486163909035e-05,
+      "mo": 0.0002494046971150965,
+      "ratio": 0.7198619693417969,
+      "mean_delta": 0.8181048631668091,
+      "loss": 0.0028676772490143776,
+      "vanishing": false,
+      "exploding": false,
+      "flag": "HEALTHY",
+      "checkpoint": "results/headline_v2/seed1_best.pt"
+    },
+    {
+      "desc": "Trained (seed2_best.pt)",
+      "mi": 0.000388356205803575,
+      "mm": 5.671104025596817e-05,
+      "mo": 0.0006193446861288976,
+      "ratio": 0.6270437348932172,
+      "mean_delta": 0.8466469645500183,
+      "loss": 0.0030472527723759413,
+      "vanishing": false,
+      "exploding": false,
+      "flag": "HEALTHY",
+      "checkpoint": "results/headline_v2/seed2_best.pt"
+    },
+    {
+      "desc": "Trained (seed3_best.pt)",
+      "mi": 6.425838910217863e-05,
+      "mm": 1.5598706787789935e-05,
+      "mo": 8.84780783962924e-05,
+      "ratio": 0.7262633811745163,
+      "mean_delta": 0.6822850704193115,
+      "loss": 0.0029487288556993008,
+      "vanishing": false,
+      "exploding": false,
+      "flag": "HEALTHY",
+      "checkpoint": "results/headline_v2/seed3_best.pt"
+    },
+    {
+      "desc": "Trained (seed4_best.pt)",
+      "mi": 0.0002762462681857869,
+      "mm": 3.782378989772691e-05,
+      "mo": 0.00038255180152191315,
+      "ratio": 0.7221146688230886,
+      "mean_delta": 1.0113344192504883,
+      "loss": 0.003017424838617444,
+      "vanishing": false,
+      "exploding": false,
+      "flag": "HEALTHY",
+      "checkpoint": "results/headline_v2/seed4_best.pt"
+    }
+  ],
+  "summary": {
+    "ratio_mean": 0.9960914849783787,
+    "ratio_std": 0.6660116239316651,
+    "ratio_min": 0.6270437348932172,
+    "ratio_max": 2.1851736706592746,
+    "mean_delta_mean": 0.7799946069717407,
+    "mean_delta_std": 0.17733538876973495,
+    "mean_delta_min": 0.5416017174720764,
+    "mean_delta_max": 1.0113344192504883,
+    "any_vanishing": false,
+    "any_exploding": false
+  }
+}
