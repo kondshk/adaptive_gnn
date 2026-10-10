@@ -31,3 +31,8 @@ Thumbs.db
 =2.2.8
 nul
 tmpclaude*
+docs/fig_interleaved_pipeline.aux
+docs/fig_interleaved_pipeline.log
+
+# Intermediate figure outputs (the paper's copies are in paper_v4/figures/)
+figures/*.pdf

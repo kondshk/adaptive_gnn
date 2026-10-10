@@ -67,10 +67,17 @@ def build_qldpc_memory_circuit_text(
       X ancillas:  next mx qubits
       Z ancillas:  next mz qubits
 
-    Detectors:
-      For each check i and each round r>=1:
-        DETECTOR = meas(r,i) XOR meas(r-1,i)
-    This avoids non-deterministic detectors from the first measurement round.
+    Data qubits are prepared and finally measured in ``basis``. Detectors:
+      * round 0: every check of the prepared basis (Z checks for basis "z",
+        X checks for basis "x") is deterministic, so DETECTOR = meas(0,i);
+        checks of the other basis are random in round 0 and get no detector;
+      * rounds r>=1: DETECTOR = meas(r,i) XOR meas(r-1,i) for every check;
+      * after the final data measurement: for every check of the measured
+        basis, DETECTOR = meas(last,i) XOR parity of the measured data qubits
+        in its support.
+    The first-round and final detectors are what make faults in the first and
+    last rounds (including data errors after the last round) visible to the
+    decoder.
     """
     if rounds < 1:
         raise ValueError("rounds must be >= 1")
@@ -128,8 +135,8 @@ def build_qldpc_memory_circuit_text(
 
     lines: List[str] = []
 
-    # Start with all data qubits in |0>
-    lines.append(f"R {' '.join(map(str, data))}")
+    # Prepare data qubits in the +1 eigenstate of the memory basis
+    lines.append(f"{'R' if basis == 'z' else 'RX'} {' '.join(map(str, data))}")
     lines.append("TICK")
 
     # Repeated measurement cycles
@@ -159,6 +166,9 @@ def build_qldpc_memory_circuit_text(
             x_meas_idx.append(idxs)
 
             # Detectors: syndrome = current XOR previous (0 means no error)
+            if r == 0 and basis == "x":
+                for i in range(mx):
+                    lines.append(f"DETECTOR {rec(x_meas_idx[0][i])}")
             if r >= 1:
                 for i in range(mx):
                     prev = x_meas_idx[r - 1][i]
@@ -187,6 +197,9 @@ def build_qldpc_memory_circuit_text(
             z_meas_idx.append(idxs)
 
             # Detectors: syndrome differences
+            if r == 0 and basis == "z":
+                for i in range(mz):
+                    lines.append(f"DETECTOR {rec(z_meas_idx[0][i])}")
             if r >= 1:
                 for i in range(mz):
                     prev = z_meas_idx[r - 1][i]
@@ -203,6 +216,12 @@ def build_qldpc_memory_circuit_text(
 
     data_meas_idx = list(range(meas_count, meas_count + n))
     meas_count += n
+
+    # Final detectors: last ancilla outcome vs parity of the measured data
+    checks, meas_idx = (hz, z_meas_idx) if basis == "z" else (hx, x_meas_idx)
+    for i in range(checks.shape[0]):
+        terms = " ".join(rec(data_meas_idx[q]) for q in _bit_support(checks[i]))
+        lines.append(f"DETECTOR {rec(meas_idx[-1][i])} {terms}")
 
     # Define observables: parity of data qubits under logical operators
     # These track encoded information protected by the code

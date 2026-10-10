@@ -6,6 +6,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Iterable, List, Optional, Sequence, Set, Tuple
 
+import numpy as np
 import stim
 
 # Recognized gate sets for noise injection (supersets are safe)
@@ -394,3 +395,39 @@ def apply_biased_circuit_noise_with_schedule(
         return out
 
     return rec(circuit, [0])
+
+
+# ============================================================================
+# SPATIALLY NON-UNIFORM NOISE: per-qubit rescaling of an existing noise model
+# ============================================================================
+
+_SCALABLE_NOISE_OPS: Set[str] = {"PAULI_CHANNEL_1", "X_ERROR", "Y_ERROR", "Z_ERROR"}
+
+
+def rescale_noise_per_qubit(circuit: stim.Circuit, scale: Sequence[float]) -> stim.Circuit:
+    """Multiply every single-qubit noise probability on qubit q by scale[q].
+
+    Applied to a circuit from apply_biased_circuit_noise(p=p0), this gives the
+    same noise model with qubit q at rate scale[q] * p0 on all of its gate,
+    idle, measurement and reset locations. Probabilities are capped at 0.5.
+    """
+    scale = np.asarray(scale, dtype=np.float64)
+
+    def rec(cc: stim.Circuit) -> stim.Circuit:
+        out = stim.Circuit()
+        for op in cc:
+            if isinstance(op, stim.CircuitRepeatBlock):
+                out += rec(op.body_copy()) * op.repeat_count
+                continue
+            if op.name not in _SCALABLE_NOISE_OPS:
+                out.append(op)
+                continue
+            args = np.asarray(op.gate_args_copy(), dtype=np.float64)
+            for t in op.targets_copy():
+                a = args * scale[t.value]
+                if a.sum() > 0.5:
+                    a *= 0.5 / a.sum()
+                out.append_operation(op.name, [t.value], a.tolist())
+        return out
+
+    return rec(circuit)

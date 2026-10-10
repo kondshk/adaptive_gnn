@@ -93,6 +93,52 @@ def _compute_code_capacity_loss(
         return base
 
 
+def _make_interleaved_decode(args, gnn, dec_z, dec_x, n_qubits, device):
+    """Interleaved GNN-BP forward pass shared by training and validation."""
+
+    def _interleaved_decode(batch, B, llr_z, llr_x, x_syn, z_syn):
+        # Uses forward_stages with correction_fn that runs GNN between stages
+        num_nodes_per = batch.x.shape[0] // B
+        batch_x_orig = batch.x.clone()
+
+        def _train_correction_fn(mid_marginals, current_llr, stage_idx):
+            # Optionally inject mid_marginals as 5th feature
+            if args.node_feat_dim == 5:
+                x_new = torch.zeros(B * num_nodes_per, 5,
+                                    device=device, dtype=batch_x_orig.dtype)
+                x_new[:, :4] = batch_x_orig[:, :4]
+                for bi in range(B):
+                    off = bi * num_nodes_per
+                    x_new[off:off + n_qubits, 4] = mid_marginals[bi]
+                batch.x = x_new
+            else:
+                batch.x = batch_x_orig
+
+            gnn_out_inter = gnn(batch)
+            if args.correction_mode == "both":
+                add_c, mul_c = gnn_out_inter
+                add_c = torch.clamp(add_c, -20.0, 20.0).view(B, n_qubits)
+                mul_c = torch.clamp(mul_c, -5.0, 5.0).view(B, n_qubits)
+                gnn_out_inter = (add_c, mul_c)
+            else:
+                gnn_out_inter = torch.clamp(gnn_out_inter, -20.0, 20.0).view(B, n_qubits)
+
+            return apply_correction(current_llr, gnn_out_inter, args.correction_mode)
+
+        stage_list = [args.stage1_iters, args.stage2_iters]
+        marg_z, _, conv_z = dec_z.forward_stages(
+            x_syn, llr_z, stage_iters=stage_list,
+            correction_fn=_train_correction_fn,
+        )
+        marg_x, _, conv_x = dec_x.forward_stages(
+            z_syn, llr_x, stage_iters=stage_list,
+            correction_fn=_train_correction_fn,
+        )
+        return marg_z, marg_x, conv_z, conv_x
+
+    return _interleaved_decode
+
+
 def main(argv: List[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Unified GNN-BP trainer")
 
@@ -396,6 +442,8 @@ def main(argv: List[str] | None = None) -> int:
         json.dump(config, f, indent=2)
 
     # --- Training loop ---
+    _interleaved_decode = _make_interleaved_decode(args, gnn, dec_z, dec_x, n_qubits, device) \
+        if args.interleaved_train else None
     best_val_loss = float("inf")
     patience_counter = 0
     grad_mon = GradientMonitor()
@@ -476,43 +524,8 @@ def main(argv: List[str] | None = None) -> int:
 
                     if args.interleaved_train:
                         # Interleaved: BP stage1 -> GNN mid-correction -> BP stage2
-                        # Uses forward_stages with correction_fn that runs GNN between stages
-                        num_nodes_per = batch.x.shape[0] // B
-                        batch_x_orig = batch.x.clone()
-
-                        def _train_correction_fn(mid_marginals, current_llr, stage_idx):
-                            # Optionally inject mid_marginals as 5th feature
-                            if args.node_feat_dim == 5:
-                                x_new = torch.zeros(B * num_nodes_per, 5,
-                                                    device=device, dtype=batch_x_orig.dtype)
-                                x_new[:, :4] = batch_x_orig[:, :4]
-                                for bi in range(B):
-                                    off = bi * num_nodes_per
-                                    x_new[off:off + n_qubits, 4] = mid_marginals[bi]
-                                batch.x = x_new
-                            else:
-                                batch.x = batch_x_orig
-
-                            gnn_out_inter = gnn(batch)
-                            if args.correction_mode == "both":
-                                add_c, mul_c = gnn_out_inter
-                                add_c = torch.clamp(add_c, -20.0, 20.0).view(B, n_qubits)
-                                mul_c = torch.clamp(mul_c, -5.0, 5.0).view(B, n_qubits)
-                                gnn_out_inter = (add_c, mul_c)
-                            else:
-                                gnn_out_inter = torch.clamp(gnn_out_inter, -20.0, 20.0).view(B, n_qubits)
-
-                            return apply_correction(current_llr, gnn_out_inter, args.correction_mode)
-
-                        stage_list = [args.stage1_iters, args.stage2_iters]
-                        marg_z, _, conv_z = dec_z.forward_stages(
-                            x_syn, llr_z, stage_iters=stage_list,
-                            correction_fn=_train_correction_fn,
-                        )
-                        marg_x, _, conv_x = dec_x.forward_stages(
-                            z_syn, llr_x, stage_iters=stage_list,
-                            correction_fn=_train_correction_fn,
-                        )
+                        marg_z, marg_x, conv_z, conv_x = _interleaved_decode(
+                            batch, B, llr_z, llr_x, x_syn, z_syn)
 
                     else:
                         # Standard: GNN -> corrections -> full BP
@@ -611,6 +624,28 @@ def main(argv: List[str] | None = None) -> int:
             for batch in val_loader:
                 batch = batch.to(device)
                 B = batch.num_graphs
+                if args.interleaved_train and args.mode == "code_capacity":
+                    n_checks = mx + mz
+                    llr_z = batch.channel_llr_z.view(B, n_qubits)
+                    llr_x = batch.channel_llr_x.view(B, n_qubits)
+                    z_err = batch.z_error.view(B, n_qubits)
+                    x_err = batch.x_error.view(B, n_qubits)
+                    target_syn = batch.target_syndrome.view(B, n_checks)
+                    x_syn = target_syn[:, :mx]
+                    z_syn = target_syn[:, mx:]
+                    marg_z, marg_x, conv_z, conv_x = _interleaved_decode(
+                        batch, B, llr_z, llr_x, x_syn, z_syn)
+                    loss = _compute_code_capacity_loss(
+                        marg_z, marg_x, z_err, x_err,
+                        args.loss, x_syn, z_syn,
+                        hx_t, hz_t, lx_t, lz_t,
+                        pos_weight=args.pos_weight,
+                        syn_weight=args.syn_weight,
+                    )
+                    val_loss += loss.item()
+                    val_conv += ((conv_z.float() + conv_x.float()) / 2).mean().item()
+                    val_batches += 1
+                    continue
                 gnn_out = gnn(batch)
 
                 if args.mode == "code_capacity":
