@@ -15,10 +15,12 @@
 \definecolor{lossred}{RGB}{190,70,70}
 \definecolor{lossfill}{RGB}{250,225,225}
 
-% Matches Table 2 and Secs. 5.3-5.4: training through 10-iteration flooding BP
-% on drifting data (p in [0.005, 0.045]) with focal loss on e_z; evaluation on
-% separately seeded held-out shots in Regime A (flooding BP) and Regime B
-% (serial BP-OSD), each against the same decoder without the GNN.
+% Matches Table 2, Sec. 3.2 and audit_headline_v2.py (run_seed): the focal loss
+% is computed on q = sigma(-(l + Delta)) against e_z, so gradients reach the GNN
+% without passing through BP; 10-iteration flooding BP is used only to pick the
+% checkpoint (fewest failures on 4,000 validation shots after each epoch).
+% Evaluation on separately seeded held-out shots in Regime A (flooding BP) and
+% Regime B (serial BP-OSD), each against the same decoder without the GNN.
 
 \begin{document}
 \begin{tikzpicture}[
@@ -41,15 +43,18 @@
 \node[lane, text=bpgreen] (tlane) at (0,0) {Training};
 \node[io, right=0.8cm of tlane] (tdata) {Training shots\\8{,}000, sinusoidal drift\\$p\in[0.005,0.045]$};
 \node[gnn, right=1.0cm of tdata] (tgnn) {\textbf{TannerGNN}};
-\node[bp, right=1.6cm of tgnn] (tbp) {\textbf{Flooding min-sum BP}\\10 iterations};
-\node[loss, right=1.9cm of tbp] (tloss) {\textbf{Focal loss}\\on $\mathbf{e}_z$};
+\node[io, right=1.6cm of tgnn] (tq) {$q_j=\sigma\bigl(-(\ell+\Delta_j)\bigr)$};
+\node[loss, right=1.3cm of tq] (tloss) {\textbf{Focal loss}\\on $\mathbf{e}_z$};
 \draw[arr] (tdata) -- (tgnn);
-\draw[arr] (tgnn) -- node[lbl, above=2pt] {$\Lambda+\Delta$} (tbp);
-\draw[arr] (tbp) -- node[lbl, above=2pt] {marginals} (tloss);
-\draw[arr, dashed, lossred] (tloss.north) -- ++(0,0.9) -| node[lbl, pos=0.25, above, text=lossred] {backpropagation through the BP unroll} (tgnn.north);
+\draw[arr] (tgnn) -- node[lbl, above=2pt] {$\Delta$} (tq);
+\draw[arr] (tq) -- (tloss);
+\draw[arr, dashed, lossred] (tloss.north) -- ++(0,0.9) -| node[lbl, pos=0.25, above, text=lossred] {gradients to the GNN only; BP is not in the loss} (tgnn.north);
+% checkpoint selection after each epoch
+\node[bp, below=1.1cm of tq] (tsel) {\textbf{Checkpoint selection:} flooding BP, 10 it.,\\on 4{,}000 validation shots; keep the epoch\\with the fewest failures};
+\draw[arr, dotted] (tgnn.south) |- node[lbl, pos=0.3, left] {after each epoch} (tsel.west);
 
 % ---------------- evaluation lane ----------------
-\node[lane, text=gnnblue, below=4.2cm of tlane] (elane) {Evaluation};
+\node[lane, text=gnnblue, below=6.0cm of tlane] (elane) {Evaluation};
 \node[io, right=0.8cm of elane] (edata) {Held-out shots\\separate seeds\\$p=0.04,\ 0.06$};
 \node[gnn, right=1.0cm of edata] (egnn) {\textbf{TannerGNN}\\(trained weights)};
 \node[bp, right=1.0cm of egnn, yshift=1.15cm] (eA) {\textbf{Regime A:} flooding BP, 10 it.};

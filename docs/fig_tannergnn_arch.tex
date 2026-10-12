@@ -16,7 +16,8 @@
 % Matches gnn_pipeline/gnn_model.py (TannerGNN, TypedMessagePassingLayer):
 % input projection Linear->LayerNorm->ReLU; per edge type an MLP on [h_src||h_dst];
 % sum aggregation; optional FiLM on the aggregate; GRU update; residual; LayerNorm;
-% readout MLP on variable nodes only.
+% readout MLP on variable nodes only. The FiLM generator receives the shot's
+% physical error rate p (gnn_model.py: data.p_value), not a syndrome estimate.
 
 \begin{document}
 \begin{tikzpicture}[
@@ -65,13 +66,13 @@
 
 % ---- readout (right column) -------------------------------------------------
 \node[gnn, right=1.3cm of res] (read) {\textbf{Readout MLP}\\variable nodes};
-\node[bp, above=1.0cm of read] (out) {$\Lambda_i+\Delta_i$ to BP};
+\node[bp, above=1.0cm of read] (out) {$\ell+\Delta_i$ to BP};
 \draw[arr] (res.east) -- node[lbl, above] {$\mathbf{h}^{(L)}$} (read.west);
 \draw[arr] (read.north) -- node[lbl, right] {$\Delta_i$} (out.south);
 
 % ---- FiLM generator (FiLM variant only) -----------------------------------------
-\node[film, above=1.25cm of filmop] (filmgen) {\textbf{FiLM generator}\ \ $\hat{p}\to\{(\gamma_\ell,\beta_\ell)\}_{\ell=1}^{L}$};
-\node[lbl, above=1pt of filmgen, text=filmorange] {FiLM variant only (not used in Sec.~5.3)};
+\node[film, above=1.25cm of filmop] (filmgen) {\textbf{FiLM generator}\ \ $p\to\{(\gamma_\ell,\beta_\ell)\}_{\ell=1}^{L}$};
+\node[lbl, above=1pt of filmgen, text=filmorange] {FiLM variant only (Appendix A; not evaluated)};
 \draw[arr, filmorange, dashed] (filmgen.south) -- (filmop.north);
 
 \node[lbl, iogray, below=3pt of feat.south west, anchor=north west, xshift=0pt, yshift=-2.6cm] {$\ell=\ln\frac{1-p}{p}$; \ $s_j$: syndrome bit};

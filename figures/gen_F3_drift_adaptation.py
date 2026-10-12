@@ -1,106 +1,63 @@
 #!/usr/bin/env python3
-"""Generate fig_F3_drift_adaptation (Fig. 7) — column width (3.3 in).
+"""Generate fig_F3_drift_adaptation (Fig. 7) from results/drift/drift.json.
 
-The values are those of Table 8, recorded from the original drift run; the
-code of that run is not part of this repository.
-
-Legend placed BELOW the axes (ncol=2) so it never covers the lines.
+LER of serial BP-OSD under per-qubit OU drift against the volatility v, for
+five per-qubit rate estimates. Oracle, stale, mean and empir: pooled LER over
+20 streams with Wilson 95% intervals. GNN: mean over five training seeds,
+error bars give the range over seeds. Produced by audit_drift.py eval.
 """
+import json
+from pathlib import Path
+
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
-from pathlib import Path
 
-vols = np.array([0.00, 0.10, 0.35, 0.50])
-oracle_ler = np.array([0.033, 0.031, 0.005, 0.004])
-stale_ler  = np.array([0.033, 0.038, 0.027, 0.052])
-empir_ler  = np.array([0.057, 0.057, 0.038, 0.035])
-gnn_ler    = np.array([0.064, 0.067, 0.050, 0.044])
+ROOT = Path(__file__).resolve().parent.parent
+d = json.loads((ROOT / "results" / "drift" / "drift.json").read_text())
+vols = np.array(d["vols"], dtype=float)
+res = [d["results"][str(v)] for v in d["vols"]]
+gnn_keys = [f"gnn_s{s}" for s in d["seeds"]]
 
-COLORS = {
-    "oracle": "#009E73",
-    "stale":  "#999999",
-    "empir":  "#E69F00",
-    "gnn":    "#0072B2",
-}
+SERIES = [  # key, label, colour, marker  (Okabe-Ito; validated palette)
+    ("oracle", "Oracle (true rates)", "#009E73", "^"),
+    ("stale", "Stale (rates at $t=0$)", "#D55E00", "s"),
+    ("mean", "Mean prior", "#CC79A7", "D"),
+    ("empir", "Empir (frequency, $W=32$)", "#E69F00", "v"),
+]
 
 plt.rcParams.update({
-    "font.family":       "sans-serif",
-    "font.sans-serif":   ["Arial", "Helvetica", "DejaVu Sans"],
-    "font.size":         8,
-    "axes.labelsize":    9,
-    "axes.titlesize":    8.5,
-    "axes.linewidth":    0.7,
-    "xtick.labelsize":   8,
-    "ytick.labelsize":   8,
-    "xtick.direction":   "in",
-    "ytick.direction":   "in",
-    "xtick.top":         True,
-    "ytick.right":       True,
-    "xtick.major.size":  3,
-    "ytick.major.size":  3,
-    "lines.linewidth":   1.5,
-    "lines.markersize":  6,
-    "legend.fontsize":   7.5,
-    "legend.frameon":    True,
-    "legend.framealpha": 0.92,
-    "legend.edgecolor":  "#cccccc",
-    "figure.dpi":        150,
-    "savefig.dpi":       300,
-    "savefig.bbox":      "tight",
-    "savefig.pad_inches": 0.05,
-    "pdf.fonttype":      42,
+    "font.family": "sans-serif", "font.sans-serif": ["Arial", "Helvetica", "DejaVu Sans"],
+    "font.size": 8, "axes.labelsize": 9, "axes.titlesize": 8.5, "axes.linewidth": 0.7,
+    "xtick.labelsize": 8, "ytick.labelsize": 8, "xtick.direction": "in", "ytick.direction": "in",
+    "xtick.top": True, "ytick.right": True, "legend.fontsize": 7, "legend.frameon": True,
+    "legend.framealpha": 0.92, "legend.edgecolor": "#cccccc", "savefig.dpi": 300,
+    "savefig.bbox": "tight", "savefig.pad_inches": 0.05, "pdf.fonttype": 42,
 })
 
-# Extra bottom margin to hold the below-axis legend
 fig, ax = plt.subplots(figsize=(3.3, 3.6))
-fig.subplots_adjust(bottom=0.30)
+for key, label, color, marker in SERIES:
+    y = np.array([r[key]["ler"] for r in res])
+    lo = np.array([r[key]["ci"][0] for r in res]); hi = np.array([r[key]["ci"][1] for r in res])
+    ax.errorbar(vols, y, yerr=[y - lo, hi - y], color=color, marker=marker, linewidth=1.3, markersize=5,
+                markeredgecolor="white", markeredgewidth=0.6, capsize=2, elinewidth=0.8, label=label, zorder=5)
+g = np.array([[r[k]["ler"] for k in gnn_keys] for r in res])
+gm = g.mean(1)
+ax.errorbar(vols, gm, yerr=[gm - g.min(1), g.max(1) - gm], color="#0072B2", marker="o", linewidth=1.3,
+            markersize=5, markeredgecolor="white", markeredgewidth=0.6, capsize=2, elinewidth=0.8,
+            label="GNN estimator (5 seeds)", zorder=6)
 
-ax.plot(vols, oracle_ler, "^-",  color=COLORS["oracle"], label="Oracle",
-        markeredgewidth=0.6, markeredgecolor="white", zorder=6)
-ax.plot(vols, stale_ler,  "v--", color=COLORS["stale"],  label="Stale calib.",
-        markeredgewidth=0.6, markeredgecolor="white", zorder=5)
-ax.plot(vols, empir_ler,  "s-",  color=COLORS["empir"],  label="Empirical",
-        markeredgewidth=0.6, markeredgecolor="white", zorder=4)
-ax.plot(vols, gnn_ler,    "o-",  color=COLORS["gnn"],    label="GNN",
-        markeredgewidth=0.6, markeredgecolor="white", zorder=7)
-
-# Star at the one GNN-wins point
-ax.scatter([0.50], [0.044], marker="*", s=160,
-           color=COLORS["gnn"], zorder=10,
-           edgecolors="white", linewidths=0.6)
-
-# Annotation: upper-right quadrant is clear (oracle drops to near 0 there,
-# stale shoots up, so there is open space between stale ~0.052 and top of axes)
-ax.annotate(r"GNN beats stale ($p{=}0.005$)",
-            xy=(0.50, 0.044), xytext=(0.295, 0.073),
-            fontsize=7, color=COLORS["gnn"],
-            arrowprops=dict(arrowstyle="->", color=COLORS["gnn"],
-                            lw=0.8, shrinkA=4, shrinkB=4),
-            ha="center",
-            bbox=dict(boxstyle="round,pad=0.22", fc="white",
-                      ec=COLORS["gnn"], alpha=0.90, lw=0.7))
-
-ax.set_xlabel("OU drift volatility")
-ax.set_ylabel("Logical Error Rate")
-ax.set_ylim(-0.002, 0.082)
-ax.set_xlim(-0.03, 0.58)
+ax.set_yscale("log")
 ax.set_xticks(vols)
-ax.yaxis.set_minor_locator(plt.MultipleLocator(0.01))
-ax.set_title(
-    r"$[\![72,12,6]\!]$, $p=0.04$, $\sigma_\mathrm{OU}=1.0$, 6,000 shots",
-    pad=4,
-)
-
-# Legend BELOW the axes in 2 columns — completely outside the plot area
-ax.legend(loc="upper center",
-          bbox_to_anchor=(0.5, -0.24),
-          ncol=2,
-          handlelength=1.5,
-          handletextpad=0.4,
-          columnspacing=0.8,
-          borderpad=0.5)
+ax.set_xticklabels([f"{v:g}" for v in vols])
+ax.set_xlim(vols.min() - 0.04, vols.max() + 0.04)
+ax.set_xlabel(r"Volatility $v$ (per-shot log-rate innovation s.d.)")
+ax.set_ylabel("Logical error rate")
+ax.set_title(r"$[\![72,12,6]\!]$, $p=0.04$, OU drift, serial BP-OSD", pad=4)
+ax.grid(axis="y", which="major", color="#e6e6e6", linewidth=0.5, zorder=0)
+ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.2), ncol=2, handlelength=1.6, borderpad=0.4,
+          labelspacing=0.3, columnspacing=1.0)
 
 out = Path(__file__).parent / "fig_F3_drift_adaptation.pdf"
 fig.savefig(out)

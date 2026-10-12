@@ -1,0 +1,17 @@
+# Exact versions used for every result in the paper (Python 3.11.15, Linux x86-64, CPU).
+#
+#   python3.11 -m venv .venv && . .venv/bin/activate
+#   pip install -r requirements-lock.txt
+#
+# All pins resolve from PyPI (checked in a fresh venv, Oct 2026). On Linux the
+# PyPI torch wheel is the CUDA build; it runs on CPU, which is all the paper
+# used. To save disk space, install the CPU wheel first:
+#   pip install --index-url https://download.pytorch.org/whl/cpu torch==2.14.0
+numpy==2.4.6
+scipy==1.17.1
+stim==1.16.0
+torch==2.14.0
+torch-geometric==2.8.0.post1
+ldpc==2.4.1
+matplotlib==3.11.2
+pytest==9.1.1

@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
-"""Generate fig_F4_phase4_ler — column width (3.3 in).
+"""Generate fig_F4_phase4_ler (Fig. 5) — column width (3.3 in).
 
-Annotation placed in the RIGHT side of the plot (away from the upper-left
-legend) pointing to the statistically-worse operating points.
+Serial BP-OSD with Wilson 95% intervals; GNN+OSD as the mean over the five
+training seeds with the seed range as error bar. A point is marked when every
+seed is significantly worse than BP-OSD after Holm correction over the 20
+McNemar tests of the table (4 error rates x 5 seeds).
 """
 import matplotlib
 matplotlib.use("Agg")
@@ -12,8 +14,6 @@ import json
 from pathlib import Path
 
 # --- Data: results/tables_v2/gnn_vs_bposd.json (audit_tables_v2.py gnn_vs_bposd) ---
-# GNN+OSD is the mean over the training seeds; a point is marked "worse" when
-# every seed is significantly worse than BP-OSD (McNemar p < 0.05).
 _res = json.loads((Path(__file__).resolve().parent.parent / "results" / "tables_v2"
                    / "gnn_vs_bposd.json").read_text())
 _pts = sorted(_res["points"].items(), key=lambda kv: float(kv[0]))
@@ -22,14 +22,25 @@ bp_osd_ler  = np.array([v["bposd"]["ler"] for _, v in _pts])
 gnn_osd_ler = np.array([np.mean([g["ler"] for g in v["gnn"].values()]) for _, v in _pts])
 
 n, z = _res["shots"], 1.96
-def wilson_ci(p_hat):
-    return z * np.sqrt(p_hat * (1 - p_hat) / n)
+def wilson(k):
+    ph = k / n; den = 1 + z * z / n
+    c = (ph + z * z / (2 * n)) / den; h = z * np.sqrt(ph * (1 - ph) / n + z * z / (4 * n * n)) / den
+    return c - h, c + h
 
-bp_ci  = wilson_ci(bp_osd_ler)
-gnn_ci = wilson_ci(gnn_osd_ler)
+lo, hi = wilson(np.array([v["bposd"]["failures"] for _, v in _pts]))
+bp_ci  = [bp_osd_ler - lo, hi - bp_osd_ler]
+g_all  = np.array([[g["ler"] for g in v["gnn"].values()] for _, v in _pts])
+gnn_ci = [gnn_osd_ler - g_all.min(1), g_all.max(1) - gnn_osd_ler]
 
-mcn_p      = np.array([max(g["mcnemar_bposd_vs_gnn"]["p"] for g in v["gnn"].values()) for _, v in _pts])
-worse_mask = mcn_p < 0.05
+# Holm step-down over all 20 tests; a point is "worse" if every seed is
+# significantly worse (n01 > n10) after adjustment.
+tests = [(i, g["mcnemar_bposd_vs_gnn"]) for i, (_, v) in enumerate(_pts) for g in v["gnn"].values()]
+order = sorted(range(len(tests)), key=lambda j: tests[j][1]["p"])
+adj, run = [0.0] * len(tests), 0.0
+for r, j in enumerate(order):
+    run = max(run, min(1.0, (len(tests) - r) * tests[j][1]["p"])); adj[j] = run
+worse_mask = np.array([all(adj[j] < 0.05 and tests[j][1]["n01"] > tests[j][1]["n10"]
+                           for j in range(len(tests)) if tests[j][0] == i) for i in range(len(_pts))])
 
 plt.rcParams.update({
     "font.family":       "sans-serif",
@@ -80,7 +91,7 @@ ax.set_yscale("log")
 ax.set_ylim(2e-3, 4e-1)
 ax.set_xlim(0.014, 0.057)
 ax.set_xlabel(r"Physical error rate $p$")
-ax.set_ylabel("Logical Error Rate")
+ax.set_ylabel("Logical error rate")
 ax.set_title(rf"$[\![72,12,6]\!]$, $\eta=20$, serial BP-OSD, {n // 1000}k shots, {len(_res['checkpoints'])} seeds", pad=4)
 
 # Legend upper LEFT
@@ -88,10 +99,8 @@ ax.legend(loc="upper left", handlelength=1.5, handletextpad=0.4)
 
 # Annotation: placed in the LOWER-RIGHT quadrant of the log plot
 # (below the two × marks, to the right) — far from the upper-left legend.
-# The × marks are at (0.040, 0.0876) and (0.050, 0.1555).
-# Lower-right has p~0.048, log-y ~0.009 (well below both × marks).
 ax.annotate(
-    r"$\times$ = GNN $\mathit{worse}$" "\n" r"(McNemar $p<0.05$)",
+    r"$\times$ = every seed worse" "\n" r"(McNemar, Holm-adjusted $p<0.05$)",
     xy=(ps[worse_mask][-1], gnn_osd_ler[worse_mask][-1]),
     xytext=(0.047, 0.0055),
     fontsize=7,
