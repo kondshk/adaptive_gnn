@@ -214,7 +214,9 @@ The first pass of these checks was AI-assisted (Claude Code).
   - `requirements-lock.txt` gives exact versions; all pins resolve from PyPI in a fresh venv.
   - `reproduce_all.sh` re-runs everything, then runs `make_tables.py --check`, then redraws the figures.
   - The availability statement now covers all results, including drift, and names tag `paper-v5`.
-  - <<REV_CLEANRUN>>
+  - `audit_headline_v2.py --eval_only` and `reproduce_all.sh --stored-checkpoints` evaluate the committed GNN checkpoints instead of retraining. GNN training on CPU is not bit-reproducible across thread configurations: a clean-clone retraining matched the committed history at epoch 1 and diverged in the fourth digit of the loss at epoch 2.
+  - Evaluation from a stored checkpoint reproduced the committed per-shot outcomes byte for byte (seeds 0 and 3, checked locally).
+  - Two clean-clone runs from GitHub were started on 12 October: one exact (`--stored-checkpoints`) and one with full retraining. Their results will be recorded here when they finish.
 - **Open:**
   - The memo asks that someone other than the script author run the clean checkout; that still has to be a person.
   - The tag `paper-v5` must be created on GitHub, because tag pushes are blocked from this environment.
