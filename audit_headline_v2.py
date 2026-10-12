@@ -19,7 +19,8 @@ numbers are directly comparable with the original headline.
 Usage:
     python audit_headline_v2.py --make_data
     python audit_headline_v2.py --baselines
-    python audit_headline_v2.py --seed 0 [--seed 1 ...]
+    python audit_headline_v2.py --seed 0 [--seed 1 ...]              # train
+    python audit_headline_v2.py --eval_only --seed 0 [--seed 1 ...]  # stored checkpoints
     python audit_headline_v2.py --summary
 """
 from __future__ import annotations
@@ -281,6 +282,44 @@ def run_seed(seed: int):
           f"red {t['reduction']:.3f} n10/n01 {t['mcnemar']['n10']}/{t['mcnemar']['n01']}", flush=True)
 
 
+def eval_seed(seed: int):
+    """Re-evaluate the stored checkpoint seed<N>_best.pt without retraining.
+
+    GNN training on CPU is not bit-reproducible across thread configurations
+    (multithreaded floating-point reductions), so retraining reproduces the
+    results only statistically. Evaluation from the stored checkpoint is
+    deterministic and reproduces the per-shot outcomes exactly. The training
+    history and last-epoch counts are copied from the stored seed<N>.json.
+    """
+    torch.manual_seed(seed); np.random.seed(seed)
+    h = Harness()
+    sp = h.splits
+    loaders = {k: DataLoader(h.graphs(sp[k]), batch_size=512, shuffle=False)
+               for k in ("val_p04",) + TEST_SPLITS}
+    base = {k: h.bp(sp[k]) for k in loaders}
+    gnn = TannerGNN(node_feat_dim=4, hidden_dim=32, num_mp_layers=3, dropout=0.0,
+                    use_film=False, use_attention=False, use_residual=True, use_layer_norm=True)
+    gnn.load_state_dict(torch.load(OUT_DIR / f"seed{seed}_best.pt", map_location="cpu"))
+    old_path = OUT_DIR / f"seed{seed}.json"
+    old = json.loads(old_path.read_text()) if old_path.exists() else {}
+    res = dict(seed=seed, best_epoch=old.get("best_epoch"), history=old.get("history"),
+               evaluated_from_stored_checkpoint=True, splits={})
+    for k in ("val_p04",) + TEST_SPLITS:
+        new = h.bp(sp[k], corr=h.gnn_corrections(gnn, loaders[k]))
+        rec = summarise(base[k].failure, new.failure)
+        rec["gnn_syndrome_mismatch"] = int(new.syndrome_mismatch.sum())
+        rec["bp_syndrome_mismatch"] = int(base[k].syndrome_mismatch.sum())
+        if k in TEST_SPLITS and old:
+            rec["last_epoch_gnn_failures"] = old["splits"][k].get("last_epoch_gnn_failures")
+        res["splits"][k] = rec
+        np.save(OUT_DIR / f"seed{seed}_{k}_gnn_fail.npy", new.failure)
+        np.save(OUT_DIR / f"{k}_bp_fail.npy", base[k].failure)
+    old_path.write_text(json.dumps(res, indent=2))
+    t = res["splits"]["test_p04"]
+    print(f"seed {seed} (stored checkpoint): test_p04 BP {t['bp_failures']} GNN {t['gnn_failures']} "
+          f"red {t['reduction']:.3f}", flush=True)
+
+
 def summary():
     runs = [json.loads(p.read_text()) for p in sorted(OUT_DIR.glob("seed*.json"))]
     out = dict(seeds=[r["seed"] for r in runs], best_epochs=[r["best_epoch"] for r in runs])
@@ -312,12 +351,14 @@ if __name__ == "__main__":
     ap.add_argument("--baselines", action="store_true")
     ap.add_argument("--seed", type=int, action="append", default=[])
     ap.add_argument("--summary", action="store_true")
+    ap.add_argument("--eval_only", action="store_true",
+                    help="with --seed: re-evaluate the stored checkpoint instead of retraining")
     a = ap.parse_args()
     if a.make_data:
         make_data()
     if a.baselines:
         run_baselines()
     for s in a.seed:
-        run_seed(s)
+        (eval_seed if a.eval_only else run_seed)(s)
     if a.summary:
         summary()

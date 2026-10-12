@@ -5,13 +5,27 @@
 # requirements-lock.txt. Takes several hours on a 4-core CPU.
 #
 #     bash reproduce_all.sh 2>&1 | tee reproduce.log
+#     bash reproduce_all.sh --stored-checkpoints 2>&1 | tee reproduce.log
+#
+# GNN training on CPU is not bit-reproducible across thread configurations,
+# so a full run retrains the GNNs and reproduces their results only up to
+# seed-to-seed variation. With --stored-checkpoints the committed checkpoints
+# (results/headline_v2/seed*_best.pt, results/drift/estimator_seed*.pt) are
+# evaluated instead of retrained; everything else is regenerated from scratch
+# and every manuscript table is reproduced exactly.
 set -euo pipefail
 cd "$(dirname "$0")"
+STORED=0
+if [ "${1:-}" = "--stored-checkpoints" ]; then STORED=1; fi
 
 step() { echo; echo "== $(date '+%H:%M:%S') $*"; }
 
 step "Table 4 data, baselines and the five GNN checkpoints (Tables 2, 4)"
-python audit_headline_v2.py --make_data --baselines --seed 0 --seed 1 --seed 2 --seed 3 --seed 4 --summary
+if [ "$STORED" = 1 ]; then
+    python audit_headline_v2.py --make_data --baselines --eval_only --seed 0 --seed 1 --seed 2 --seed 3 --seed 4 --summary
+else
+    python audit_headline_v2.py --make_data --baselines --seed 0 --seed 1 --seed 2 --seed 3 --seed 4 --summary
+fi
 
 step "Table 3, Fig. 3, invariance checks (Sec. 5.1-5.2)"
 python audit_tables_v2.py bposd_configs
@@ -34,7 +48,7 @@ step "Code-capacity oracle gap (Table 9, Fig. 5)"
 python audit_tables_v2.py oracle
 
 step "Drift experiment (Table 10, Fig. 6)"
-python audit_drift.py train
+if [ "$STORED" = 0 ]; then python audit_drift.py train; fi
 python audit_drift.py eval
 
 step "Circuit-level oracle gap (Tables 11-12, Fig. 7)"

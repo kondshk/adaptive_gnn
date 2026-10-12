@@ -61,7 +61,17 @@ On bivariate bicycle (BB) codes under $Z$-biased noise ($\eta=20$):
 
 Each script writes its results to `results/`, including the per-shot failure
 vectors. Run the commands from the repository root;
-[`reproduce_all.sh`](reproduce_all.sh) runs all of them in order.
+[`reproduce_all.sh`](reproduce_all.sh) runs all of them in order and then
+checks every results table of the manuscript:
+
+```bash
+bash reproduce_all.sh --stored-checkpoints   # exact: evaluates the committed GNN checkpoints
+bash reproduce_all.sh                        # full: also retrains every GNN
+```
+
+GNN training on CPU is not bit-reproducible across thread configurations, so
+the full run reproduces the GNN results only up to seed-to-seed variation;
+with `--stored-checkpoints` every table is reproduced exactly.
 
 | Paper item | Script | Results |
 |---|---|---|

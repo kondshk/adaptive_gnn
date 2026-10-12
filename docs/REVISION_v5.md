@@ -32,9 +32,10 @@ The first pass of these checks was AI-assisted (Claude Code).
   - The loss is `focal_loss(sigmoid(-(prior + d)), b.y)` (`audit_headline_v2.py`, `run_seed`).
   - So the graph is (l, s) → TannerGNN → Δ → q = σ(−(l+Δ)) → focal loss vs e_z. BP is not in the loss.
   - BP enters only through checkpoint selection: after each epoch, `score("val_p04")` decodes 4,000 validation shots with 10-iteration flooding BP, and the epoch with the fewest failures is kept.
-  - The reviewed text claimed otherwise in five places:
-    - "trained through 10-iteration flooding BP" (abstract, conclusion);
+  - The reviewed text said or implied otherwise in many places, including:
+    - "a model trained with 10-iteration flooding BP" (abstract) and "trained through 10-iteration flooding BP" (conclusion, Fig. 3 caption);
     - "BP in training loop" (Table 2);
+    - "the decoder represented in the training computation graph" (Regime A);
     - "optimized through a 10-iteration flooding-BP computation graph" (Sec. 5.4);
     - "backpropagation through the BP unroll" (Fig. 3).
 - **Changed:**
@@ -70,7 +71,7 @@ The first pass of these checks was AI-assisted (Claude Code).
   - GNN+BP-OSD: at most one extra X failure.
 - **Changed:**
   - New Table 5 (failures by component) and the paragraph "The two CSS components" in Sec. 5.3.
-  - Remark 1 rewritten.
+  - Remark 1 rewritten with these numbers and moved to the end of Sec. 3.2.
   - The input/output definition per component is in Sec. 3.1 and Table 2.
   - Separate heads: BP makes no X-component errors at these operating points, so a trained X head has nothing to correct. Leaving the X prior unchanged (Δ^X = 0) is the appropriate choice.
 - **Open:** the Z-only variant was chosen after seeing the test results, so the paper keeps the pre-specified setting as the headline and labels Z-only as post hoc.
@@ -89,7 +90,7 @@ The first pass of these checks was AI-assisted (Claude Code).
   - Sec. 2.2 gives the matched LLRs Λ_z and Λ_x.
   - Sec. 2.3's false sentence was removed, along with the random-telegraph-noise model, which no experiment used.
   - Table 2 has a new "Prior feature" row.
-  - In Appendix A the FiLM description, Algorithm 1 and Fig. 1 now say the input is p.
+  - The FiLM description in Appendix A, Algorithm 1, Fig. 1 and Fig. 8 now say the input is p.
 - **Open:** none.
 
 ### M5: LLR ratio
@@ -139,7 +140,7 @@ The first pass of these checks was AI-assisted (Claude Code).
   - Table 2 adds the implementation: ldpc 2.4.1 `BpOsdDecoder`.
   - Regime B is renamed "stronger reference decoder".
   - "Competitive classical baseline" was removed from limitation (i) and Sec. 6.3.
-  - 18 references were added (Holm 1979, "Tour de gross", and 16 from the memo). The 16 memo references, and Gong's added page range, were checked against publisher and arXiv records by web search; direct fetches of those sites were blocked here. Preprints are marked.
+  - 20 references were added: 18 from the memo's list, plus Holm (1979) for the multiple-comparison correction and Yoder et al. ("Tour de gross") for the code names. All 20, and Gong et al.'s added page range, were checked against publisher, arXiv or JSTOR records by web search; direct fetches of publisher sites were blocked from this environment. Preprints are marked.
   - Uncited entries were removed from `references.bib`.
 - **Open:** confirm the article number of Javed et al. (TQE 7, 2100319) on IEEE Xplore; only one source confirmed it.
 
