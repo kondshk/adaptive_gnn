@@ -7,9 +7,10 @@
 #     bash reproduce_all.sh 2>&1 | tee reproduce.log
 #     bash reproduce_all.sh --stored-checkpoints 2>&1 | tee reproduce.log
 #
-# GNN training on CPU is not bit-reproducible across thread configurations,
-# so a full run retrains the GNNs and reproduces their results only up to
-# seed-to-seed variation. With --stored-checkpoints the committed checkpoints
+# The headline GNNs were trained with PyTorch's default multithreading, which
+# is not bit-reproducible, so a full run reproduces Tables 4-8 only up to
+# seed-to-seed variation (the drift estimators, trained single-threaded,
+# reproduce exactly). With --stored-checkpoints the committed checkpoints
 # (results/headline_v2/seed*_best.pt, results/drift/estimator_seed*.pt) are
 # evaluated instead of retrained; everything else is regenerated from scratch
 # and every manuscript table is reproduced exactly.

@@ -69,9 +69,13 @@ bash reproduce_all.sh --stored-checkpoints   # exact: evaluates the committed GN
 bash reproduce_all.sh                        # full: also retrains every GNN
 ```
 
-GNN training on CPU is not bit-reproducible across thread configurations, so
-the full run reproduces the GNN results only up to seed-to-seed variation;
-with `--stored-checkpoints` every table is reproduced exactly.
+With `--stored-checkpoints` every table is reproduced exactly. The full run
+also reproduces the drift estimators exactly, because they are trained with a
+single CPU thread. The five headline GNNs were trained with PyTorch's default
+multithreading, which is not bit-reproducible. Retraining them reproduces
+Tables 4–8 only up to seed-to-seed variation; in a clean-clone check it gave
+12.3% ± 0.7% against the paper's 12.5% ± 0.6% at p = 0.04, with every
+conclusion unchanged.
 
 | Paper item | Script | Results |
 |---|---|---|

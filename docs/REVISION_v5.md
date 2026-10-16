@@ -227,7 +227,8 @@ The first pass of these checks was AI-assisted (Claude Code).
     - Table 5: the Z-only reduction is 12.8% ± 0.9% (paper 13.3% ± 0.9%), and Δ on both components adds 6–48 X failures (paper 7–54).
     - Table 8: every retrained seed still fails all 57 weight-3 half-stabilizer errors at p = 0.04 (24 of 24 at p = 0.06), and BP-OSD fails none.
     - Gradient audit: ratio 0.54–1.10 (paper 0.63–2.19), mean |Δ| 0.71–0.89 (paper 0.54–1.01).
-  - **Full retraining run, drift part:** in progress (the five drift estimators are being retrained).
+  - **Full retraining run, drift part:** the five drift estimators were retrained from scratch. The checkpoints, training histories, `drift.json` and per-shot outcomes came out byte-identical to the committed ones, so Table 10 and Fig. 6 reproduce exactly even after retraining.
+  - **Why the two kinds of training differ:** `audit_drift.py` trains with a single CPU thread (`torch.set_num_threads(1)`), which is deterministic. The headline models were trained with PyTorch's default multithreading, which is not. The committed checkpoints remain the reference for Tables 4–8. Training them single-threaded in a future version would make them bit-reproducible too, but it would change the stored checkpoints and their numbers, so we did not do it here.
 - **Open:**
   - The memo asks that someone other than the script author run the clean checkout; that still has to be a person.
   - The tag `paper-v5` must be created on GitHub, because tag pushes are blocked from this environment.
