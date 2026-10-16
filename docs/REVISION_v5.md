@@ -221,7 +221,13 @@ The first pass of these checks was AI-assisted (Claude Code).
     - Of the 73 committed result and data files, 63 were regenerated identically. Five (`seed*.json`) differ only by the added `evaluated_from_stored_checkpoint` flag. The remaining five are the drift estimators' training histories, which only training produces.
     - All five data figures were pixel-identical.
     - Run time was 2 h 18 min on 4 CPU cores.
-  - **Full retraining run:** in progress; it retrains the five headline GNNs and the five drift estimators and compares the results statistically.
+  - **Full retraining run (16 October), headline part:** in a second fresh clone, the five headline GNNs were retrained from scratch and every GNN-dependent analysis was redone. The non-GNN rows reproduced exactly, and every conclusion held, with the numbers moving within seed-to-seed variation:
+    - Table 4 reduction: 12.3% ± 0.7% at p = 0.04 (paper 12.5% ± 0.6%) and 10.8% ± 0.3% at p = 0.06 (paper 10.6% ± 0.7%); McNemar p < 10⁻³³ for every seed.
+    - Table 6: no seed better at any p; after Holm correction, 11 of 15 seed/p pairs at p ≥ 0.03 are significantly worse, the same as the paper.
+    - Table 5: the Z-only reduction is 12.8% ± 0.9% (paper 13.3% ± 0.9%), and Δ on both components adds 6–48 X failures (paper 7–54).
+    - Table 8: every retrained seed still fails all 57 weight-3 half-stabilizer errors at p = 0.04 (24 of 24 at p = 0.06), and BP-OSD fails none.
+    - Gradient audit: ratio 0.54–1.10 (paper 0.63–2.19), mean |Δ| 0.71–0.89 (paper 0.54–1.01).
+  - **Full retraining run, drift part:** in progress (the five drift estimators are being retrained).
 - **Open:**
   - The memo asks that someone other than the script author run the clean checkout; that still has to be a person.
   - The tag `paper-v5` must be created on GitHub, because tag pushes are blocked from this environment.
