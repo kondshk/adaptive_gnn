@@ -490,7 +490,7 @@ no $X$-component errors at these operating points, a separately trained
 $X$ head would have nothing to correct, and leaving the $X$ prior
 unchanged is the appropriate choice. With BP-OSD the $X$ component is
 essentially unaffected (at most """ + {"1": "one"}.get(C04["x_gnnosd"].split("--")[-1], C04["x_gnnosd"].split("--")[-1]) + r""" extra failure at $p=0.04$), so the
-comparisons below do not depend on this choice.""", "M3 components + gradient audit")
+BP-OSD comparisons below do not depend on this choice.""", "M3 components + gradient audit")
 R(r"""generalization result. The interleaved architecture of
 Sec.~\ref{sec:neuralbp} is not evaluated in this work.""",
   r"""generalization result. The FiLM and interleaved variants
