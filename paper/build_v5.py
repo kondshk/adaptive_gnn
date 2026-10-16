@@ -393,9 +393,14 @@ shows that it does not in the tested regime.""",
 correction is evaluated with serial-schedule min-sum BP-OSD
 (Table~\ref{tab:hparams}). This tests whether the correction also
 improves a stronger classical decoder; BP-OSD serves here as a reference
-point, not as the best available decoder (Sec.~\ref{sec:related}).
+point, not as the best available decoder (Sec.~\ref{sec:related}). Plain
+BP-OSD uses a uniform prior in each component ($p_z$ and $p_x$, or $p$ in
+Table~\ref{tab:gnn_null}); the value of a uniform prior does not change its
+decisions, which we confirmed on all 20{,}000 test shots at $p=0.04$. With
+the GNN, qubit $i$ enters BP-OSD with prior error probability
+$\sigma\bigl(-(\ell+\Delta_i)\bigr)$ in both components.
 Section~\ref{sec:mismatch} shows that the correction does not help in the
-tested regime.""", "M8 regime B")
+tested regime.""", "M4/M8 regime B")
 R(r"""McNemar tests~\cite{McNemar1947}. We report Wilson score 95\% confidence
 intervals for LER estimates.""",
   r"""McNemar tests~\cite{McNemar1947} (two-sided, with continuity

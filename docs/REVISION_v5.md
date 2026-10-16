@@ -90,6 +90,7 @@ The first pass of these checks was AI-assisted (Claude Code).
   - Sec. 2.2 gives the matched LLRs Λ_z and Λ_x.
   - Sec. 2.3's false sentence was removed, along with the random-telegraph-noise model, which no experiment used.
   - Table 2 has a new "Prior feature" row.
+  - Sec. 4.1 (Regime B) now states the BP-OSD priors. Plain BP-OSD uses a uniform prior per component; matched (p_z, p_x) and unmatched (p) uniform priors gave identical decisions on all 20,000 test shots. With the GNN, each qubit enters BP-OSD with prior σ(−(ℓ+Δ_i)) in both components.
   - The FiLM description in Appendix A, Algorithm 1, Fig. 1 and Fig. 8 now say the input is p.
 - **Open:** none.
 
@@ -137,7 +138,7 @@ The first pass of these checks was AI-assisted (Claude Code).
     3. the modern BB / real-time frontier (Relay-BP, GARI with normalized min-sum ensembles, diversity methods, ambiguity clustering, hardware BP-OSD);
     4. learned decoders.
   - It states that BP-OSD is "a useful, fully specified reference decoder, not the state of the art".
-  - Table 2 adds the implementation: ldpc 2.4.1 `BpOsdDecoder`.
+  - Table 2 adds the implementation: ldpc 2.4.1 `BpOsdDecoder`. Sec. 4.1 adds the priors it is given, with and without the GNN (see M4).
   - Regime B is renamed "stronger reference decoder".
   - "Competitive classical baseline" was removed from limitation (i) and Sec. 6.3.
   - 20 references were added: 18 from the memo's list, plus Holm (1979) for the multiple-comparison correction and Yoder et al. ("Tour de gross") for the code names. All 20, and Gong et al.'s added page range, were checked against publisher, arXiv or JSTOR records by web search; direct fetches of publisher sites were blocked from this environment. Preprints are marked.
@@ -216,7 +217,11 @@ The first pass of these checks was AI-assisted (Claude Code).
   - The availability statement now covers all results, including drift, and names tag `paper-v5`.
   - `audit_headline_v2.py --eval_only` and `reproduce_all.sh --stored-checkpoints` evaluate the committed GNN checkpoints instead of retraining. GNN training on CPU is not bit-reproducible across thread configurations: a clean-clone retraining matched the committed history at epoch 1 and diverged in the fourth digit of the loss at epoch 2.
   - Evaluation from a stored checkpoint reproduced the committed per-shot outcomes byte for byte (seeds 0 and 3, checked locally).
-  - Two clean-clone runs from GitHub were started on 12 October: one exact (`--stored-checkpoints`) and one with full retraining. Their results will be recorded here when they finish.
+  - **Exact clean run (13 October):** a fresh clone of commit `676c8be` from GitHub was used, with every result and generated dataset deleted except the GNN checkpoints and their training histories. All 63 manuscript table rows were found by `make_tables.py --check`.
+    - Of the 73 committed result and data files, 63 were regenerated identically. Five (`seed*.json`) differ only by the added `evaluated_from_stored_checkpoint` flag. The remaining five are the drift estimators' training histories, which only training produces.
+    - All five data figures were pixel-identical.
+    - Run time was 2 h 18 min on 4 CPU cores.
+  - **Full retraining run:** in progress; it retrains the five headline GNNs and the five drift estimators and compares the results statistically.
 - **Open:**
   - The memo asks that someone other than the script author run the clean checkout; that still has to be a person.
   - The tag `paper-v5` must be created on GitHub, because tag pushes are blocked from this environment.
